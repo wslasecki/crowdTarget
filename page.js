@@ -1,9 +1,7 @@
-$(function() {
- 	startTargets();   
-});
 
 function startTargets() {
     addTarget();
+    console.log("Mouse location (X,Y): ", mouseX, mouseY);
 };
 
 var count = 0;
@@ -36,3 +34,24 @@ function addTarget() {
     
     count++;
 };
+
+
+var mouseX = -1;
+var mouseY = -1;
+
+$(document).ready( function(e) {
+console.log("loaded", e);
+  mouseX = e.pageX;
+  mouseY = e.pageY;
+  // Update mouse location on move
+  $(document).bind('mousemove',function(e){ 
+    //console.log("e.pageX: " + e.pageX + ", e.pageY: " + e.pageY); 
+    mouseX = e.pageX;
+    mouseY = e.pageY;
+  });
+
+  $(document).on('click', function() {
+ 	startTargets();
+  });
+});
+
