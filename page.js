@@ -1,18 +1,46 @@
-var speed = 100; //pixels per second
-var numTargets = 3;
+//pixels per second
+var speeds = [50,100,150,200,250,300];
+var numTargets = [1,2,3,4,5,6];
+
+//create combination of every test variable
+combos = [];
+for(var i = 0; i < speeds.length; i++){
+	for(var j = 0; j < numTargets.length; j++){
+		combos.push({speed:speeds[i],numTargets:numTargets[j]});
+	}
+}
+//shuffle combos
+for(var i = combos.length - 1; i > 0; i--) {
+	var j = Math.floor(Math.random() * (i + 1));
+	var temp = combos[i];
+	combos[i] = combos[j];
+	combos[j] = temp;
+}
 
 var timeBetweenRounds = 500;
 
+currentRound = 0;
 function startTargets() {
-  console.log("Starting targets w/ mouse position (x,y): ", mouseX, mouseY);
+	if (currentRound < combos.length) {
+		var roundParams = combos[currentRound];
+		currentRound++;
 
-  for(var i=0; i<numTargets; i++) {
-    addTarget();
-  }
+		console.log("Starting targets w/ mouse position (x,y): ", mouseX, mouseY);
+
+		for(var i=0; i<roundParams.numTargets; i++) {
+			addTarget(roundParams.speed);
+		}
+	} else {
+		finished();
+	}
 };
 
+function finished() {
+	alert("Thanks For Playing");
+}
+
 var count = 0;
-function addTarget() {
+function addTarget(speed) {
     //randomly create start and end positions
     var startLeft = $("#target-zone").width() * Math.random();
     var startTop = 0;
@@ -38,19 +66,25 @@ function addTarget() {
     }, time, "linear", function() {
 		//on end animation
         $(this).remove();
-		
-		//start next round if no targets remain
-		if ($(".target").length == 0) {
-			setTimeout(startTargets, timeBetweenRounds);
-		}
+		tryNextRound();
   	});
 	
 	newTarget.click(function() {
-		newTarget.hide();
+		newTarget.remove();
+		tryNextRound();
 	})
     
     count++;
 };
+
+var nextRoundTimer = -1;
+function tryNextRound() {
+	//start next round if no targets remain
+	if ($(".target").length == 0) {
+		clearTimeout(nextRoundTimer);
+		nextRoundTimer = setTimeout(startTargets, timeBetweenRounds);
+	}
+}
 
 
 var mouseX = -1;
