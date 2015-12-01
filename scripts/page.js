@@ -102,6 +102,7 @@ function stillFrameAnimation(newTarget, startLeft, startTop, endLeft, endTop, ti
 	
 	//create a function that will animate this specific target
 	var moveTarget = function() {
+		// Begin the countdown bar animation
 		startCountdown();
 		
 		//calculate and set the new position of the targets
