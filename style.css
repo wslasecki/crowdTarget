@@ -1,0 +1,12 @@
+
+#target-zone {
+  height: 600px;
+  width: 600px;
+  float: left;
+}
+
+#feedback {
+  width: 150px;
+  height: 600px;
+  float: left;
+}
