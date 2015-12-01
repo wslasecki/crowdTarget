@@ -102,10 +102,7 @@ function stillFrameAnimation(newTarget, startLeft, startTop, endLeft, endTop, ti
 	
 	//create a function that will animate this specific target
 	var moveTarget = function() {
-		//start the countdown bar animation
-		$("#countdown-bar").stop();
-		$("#countdown-bar").css({width:"100%"});
-		$("#countdown-bar").animate({width:"0%"},stillFrameDuration, "linear");
+		startCountdown();
 		
 		//calculate and set the new position of the targets
 		var newLeft = parseFloat(newTarget.css("left")) + leftInc;
@@ -137,12 +134,23 @@ function tryNextRound() {
 		//stop the countdown timer
 		$("#countdown-bar").stop();
 		$("#countdown-bar").css({width:"0%"});
+		countdownRunning = false;
 		
 		clearTimeout(nextRoundTimer);
 		nextRoundTimer = setTimeout(startTargets, timeBetweenRounds);
 	}
 }
 
+// Start the countdown bar animation
+var countdownRunning = false;
+function startCountdown() {
+	if( !countdownRunning ) {
+		countdownRunning = true;
+		$("#countdown-bar").stop();
+		$("#countdown-bar").css({width:"100%"});
+		$("#countdown-bar").animate({width:"0%"},stillFrameDuration, "linear");
+	}
+}
 
 var mouseX = -1;
 var mouseY = -1;
