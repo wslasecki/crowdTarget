@@ -70,5 +70,13 @@ $(document).ready( function(e) {
     startTargets();
     $('#start').hide();
   });
+
+  	//handle misclicks
+	$("#target-zone").click(function() {
+		console.log("hit");
+		$("#target-zone").animate({"backgroundColor":"#000"},1000,"linear",function(){
+			//$("#target-zone").animate({"background-color":"#FFF"},1000,"linear");
+		});
+	});
 });
 
