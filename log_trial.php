@@ -9,6 +9,7 @@ if(isset($_REQUEST['task']) && isset($_REQUEST['time']) && isset($_REQUEST['work
   $worker = $_REQUEST['worker'];
   $trial = $_REQUEST['trial'];
   $session = $_REQUEST['session'];
+  $frameTime = $_REQUEST['frametime'];
   $speed = $_REQUEST['speed'];
   $startTime = $_REQUEST['starttime'];
   $duration = $_REQUEST['duration'];
@@ -23,8 +24,8 @@ if(isset($_REQUEST['task']) && isset($_REQUEST['time']) && isset($_REQUEST['work
   }
 
 if($dbh) {
-    $sth = $dbh->prepare ("INSERT INTO tasks (worker, trial, session, speed, starttime, duration, avrgproximity, misses, targetsmissed) VALUES ()");
-    $sth->execute(array(':time'=>$time));
+    $sth = $dbh->prepare ("INSERT INTO tasks (worker, trial, session, frametime, speed, starttime, duration, avrgproximity, misses, targetsmissed) VALUES (:worker, :trial, :session, :frameTime, :speed, :startTime, :duration, :avrgProx, :misses, :targetsMissed)");
+    $sth->execute(array(':worker'=>$worker, ':trial'=>$trial, ':session'=>$session, ':frameTime'=>$frameTime, ':speed'=>$speed, ':startTime'=>$startTime, ':duration'=>$duration, ':avrgProx'=>$avrgProx, ':misses'=>$misses, ':targetsMissed'=>$targetsMissed);
     $row = $sth->fetch(PDO::FETCH_ASSOC, PDO::FETCH_ORI_NEXT);
 }
 
