@@ -72,11 +72,12 @@ $(document).ready( function(e) {
   });
 
   	//handle misclicks
-	$("#target-zone").click(function() {
-		console.log("hit");
-		$("#target-zone").animate({"backgroundColor":"#000"},50,"linear",function(){
-			$("#target-zone").animate({"backgroundColor":"#FFF"},50,"linear");
-		});
+	$("#target-zone").click(function(e) {
+		if (e.target.id == "target-zone") { 
+			$("#target-zone").animate({"backgroundColor":"#000"},50,"linear",function(){
+				$("#target-zone").animate({"backgroundColor":"#FFF"},50,"linear");
+			});
+        }
 	});
 });
 
