@@ -1,9 +1,16 @@
+var speed = 100; //pixels per second
+var numTargets = 3;
+
+var timeBetweenRounds = 500;
+
 $(function() {
- 	startTargets();   
+ 	startTargets();
 });
 
 function startTargets() {
-    addTarget();
+	for(var i=0; i<numTargets; i++) {
+		addTarget();
+	}
 };
 
 var count = 0;
@@ -16,7 +23,7 @@ function addTarget() {
     var endTop = $("#target-zone").height();
     
     var distance = Math.sqrt((endLeft-startLeft)*(endLeft-startLeft) + (endTop-startTop)*(endTop-startTop));
-    var speed = 100; //pixels per second
+    
     var time = (distance/speed) * 1000;
     
     //create a new target over the area
@@ -26,13 +33,23 @@ function addTarget() {
     var newTarget = $("#"+targetid);
     newTarget.css({left:startLeft, top:startTop});
     
+	//animate the target
     newTarget.animate({
 		top: endTop,
 		left: endLeft,
     }, time, "linear", function() {
+		//on end animation
         $(this).remove();
-        alert("done");
+		
+		//start next round if no targets remain
+		if ($(".target").length == 0) {
+			setTimeout(startTargets, timeBetweenRounds);
+		}
   	});
+	
+	newTarget.click(function() {
+		newTarget.hide();
+	})
     
     count++;
 };
