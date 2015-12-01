@@ -21,15 +21,23 @@ var timeBetweenRounds = 500;
 
 currentRound = 0;
 function startTargets() {
-	var roundParams = combos[currentRound];
-	currentRound++;
-	
-  console.log("Starting targets w/ mouse position (x,y): ", mouseX, mouseY);
+	if (currentRound < combos.length) {
+		var roundParams = combos[currentRound];
+		currentRound++;
 
-  for(var i=0; i<roundParams.numTargets; i++) {
-    addTarget(roundParams.speed);
-  }
+		console.log("Starting targets w/ mouse position (x,y): ", mouseX, mouseY);
+
+		for(var i=0; i<roundParams.numTargets; i++) {
+			addTarget(roundParams.speed);
+		}
+	} else {
+		finished();
+	}
 };
+
+function finished() {
+	alert("Thanks For Playing");
+}
 
 var count = 0;
 function addTarget(speed) {
