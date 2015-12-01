@@ -38,19 +38,25 @@ function addTarget() {
     }, time, "linear", function() {
 		//on end animation
         $(this).remove();
-		
-		//start next round if no targets remain
-		if ($(".target").length == 0) {
-			setTimeout(startTargets, timeBetweenRounds);
-		}
+		tryNextRound();
   	});
 	
 	newTarget.click(function() {
-		newTarget.hide();
+		newTarget.remove();
+		tryNextRound();
 	})
     
     count++;
 };
+
+var nextRoundTimer = -1;
+function tryNextRound() {
+	//start next round if no targets remain
+	if ($(".target").length == 0) {
+		clearTimeout(nextRoundTimer);
+		nextRoundTimer = setTimeout(startTargets, timeBetweenRounds);
+	}
+}
 
 
 var mouseX = -1;
