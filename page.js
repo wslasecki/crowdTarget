@@ -102,6 +102,12 @@ function stillFrameAnimation(newTarget, startLeft, startTop, endLeft, endTop, ti
 	
 	//create a function that will animate this specific target
 	var moveTarget = function() {
+		//start the countdown bar animation
+		$("#countdown-bar").stop();
+		$("#countdown-bar").css({width:"100%"});
+		$("#countdown-bar").animate({width:"0%"},stillFrameDuration, "linear");
+		
+		//calculate and set the new position of the targets
 		var newLeft = parseFloat(newTarget.css("left")) + leftInc;
 		var newTop = parseFloat(newTarget.css("top")) + topInc;
 		newTarget.css({
@@ -110,6 +116,7 @@ function stillFrameAnimation(newTarget, startLeft, startTop, endLeft, endTop, ti
 			display:"block"
 		});
 		
+		//remove if the targets have gone off screen
 		if (newTop < 0 || newTop > $("#target-zone").height()) {
 			newTarget.remove();
 			tryNextRound();
@@ -127,6 +134,10 @@ var nextRoundTimer = -1;
 function tryNextRound() {
 	//start next round if no targets remain
 	if ($(".target").length == 0) {
+		//stop the countdown timer
+		$("#countdown-bar").stop();
+		$("#countdown-bar").css({width:"0%"});
+		
 		clearTimeout(nextRoundTimer);
 		nextRoundTimer = setTimeout(startTargets, timeBetweenRounds);
 	}
