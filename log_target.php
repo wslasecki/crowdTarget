@@ -18,6 +18,7 @@ if(isset($_REQUEST['task']) && isset($_REQUEST['time']) && isset($_REQUEST['work
   $path = $_REQUEST['path'];
   $dist = $_REQUEST['distance'];
   $prox = $_REQUEST['proximity'];
+  $misses = $_REQUEST['misses'];
 
   try {
     $dbh = getDatabaseHandle();
