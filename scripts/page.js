@@ -2,8 +2,18 @@
 var speeds = [50,100,150,200,250,300];
 var numTargets = [1,2,3,4,5,6];
 var stillFrameDuration = 2000;
-var animationFunction=stillFrameAnimation;
-//var animationFunction=videoAnimation;
+//var animationFunction=stillFrameAnimation;
+var animationFunction=videoAnimation;
+
+//initialize logging vars
+var workerId = gup("workerId");
+var sessionId = gup("sessionId");
+var startTime = -1;
+var roundDuration = -1;
+var avrgproximity = 0;
+var misclicks = 0;
+var targetssurvived = 0;
+var targetshit = 0;
 
 //create combination of every test variable
 combos = [];
@@ -23,10 +33,21 @@ for(var i = combos.length - 1; i > 0; i--) {
 var timeBetweenRounds = 500;
 
 currentRound = 0;
+currentSpeed = 0;
+currentNumTargets = 0;
 function startTargets() {
 	if (currentRound < combos.length) {
 		var roundParams = combos[currentRound];
 		currentRound++;
+		currentSpeed = roundParams.speed;
+		currentNumTargets = roundParams.numTargets;
+		
+		//clear logging variables
+		startTime =  (new Date).getTime();
+		avrgproximity = 0;
+		misclicks = 0;
+		targetssurvived = 0;
+		targetshit = 0;
 
 		console.log("Starting targets w/ mouse position (x,y): ", mouseX, mouseY);
 
@@ -67,6 +88,8 @@ function addTarget(speed) {
 	
 	//handle the click on the target
 	newTarget.click(function() {
+		targetshit++;
+		newTarget.stop();
 		newTarget.remove();
 		tryNextRound();
 	})
@@ -80,6 +103,8 @@ function videoAnimation(newTarget, startLeft, startTop, endLeft, endTop, time) {
 		top: endTop,
     }, time, "linear", function() {
 		//on end animation
+		targetssurvived++;
+		
         $(this).remove();
 		tryNextRound();
   	});
@@ -102,6 +127,12 @@ function stillFrameAnimation(newTarget, startLeft, startTop, endLeft, endTop, ti
 	
 	//create a function that will animate this specific target
 	var moveTarget = function() {
+		//check if target still exists
+		if($("#"+newTarget.attr("id")).length == 0) {
+			//just quit the animation loop for this target if its been clicked on
+			return;
+		}
+
 		// Begin the countdown bar animation
 		startCountdown();
 		
@@ -116,6 +147,8 @@ function stillFrameAnimation(newTarget, startLeft, startTop, endLeft, endTop, ti
 		
 		//remove if the targets have gone off screen
 		if (newTop < 0 || newTop > $("#target-zone").height()) {
+			targetssurvived++;
+			
 			newTarget.remove();
 			tryNextRound();
 		}else {
@@ -137,6 +170,10 @@ function tryNextRound() {
 		$("#countdown-bar").css({width:"0%"});
 		countdownRunning = false;
 		
+		//send the rounds logs
+		logTrial(workerId, currentRound, sessionId, stillFrameDuration, currentSpeed, starttime, duration, avrgproximity, misses, targetsmissed);
+		
+		//begin next round in a few milliseconds
 		clearTimeout(nextRoundTimer);
 		nextRoundTimer = setTimeout(startTargets, timeBetweenRounds);
 	}
@@ -174,6 +211,7 @@ $(document).ready( function(e) {
   	//handle misclicks
 	$("#target-zone").click(function(e) {
 		if (e.target.id == "target-zone") { 
+			misclicks++;
 			$("#target-zone").animate({"backgroundColor":"#000"},50,"linear",function(){
 				$("#target-zone").animate({"backgroundColor":"#FFF"},50,"linear");
 			});
