@@ -4,7 +4,7 @@ ini_set("display_errors", 1);
 
 include('_db.php');
 
-if(isset($_REQUEST['task']) && isset($_REQUEST['time']) && isset($_REQUEST['worker'])) {
+if(isset($_REQUEST['time']) && isset($_REQUEST['worker'])) {
 
   $worker = $_REQUEST['worker'];
   $trial = $_REQUEST['trial'];
@@ -26,7 +26,7 @@ if(isset($_REQUEST['task']) && isset($_REQUEST['time']) && isset($_REQUEST['work
   }
 
 if($dbh) {
-    $sth = $dbh->prepare ("INSERT INTO tasks (worker, trial, session, frametime, speed, starttime, duration, avrgproximity, misses, numnargets, targetshit, targetsmissed) VALUES (:worker, :trial, :session, :frameTime, :speed, :startTime, :duration, :avrgProx, :misses, :numTargets, :targetsHit, :targetsMissed)");
+    $sth = $dbh->prepare ("INSERT INTO trials (worker, trial, session, frametime, speed, starttime, duration, avrgproximity, misses, numnargets, targetshit, targetsmissed) VALUES (:worker, :trial, :session, :frameTime, :speed, :startTime, :duration, :avrgProx, :misses, :numTargets, :targetsHit, :targetsMissed)");
     $sth->execute(array(':worker'=>$worker, ':trial'=>$trial, ':session'=>$session, ':frameTime'=>$frameTime, ':speed'=>$speed, ':startTime'=>$startTime, ':duration'=>$duration, ':avrgProx'=>$avrgProx, ':misses'=>$misses, ':numTargets'=>$numTargets, ':targetsHit'=>$targetsHit, ':targetsMissed'=>$targetsMissed);
     $row = $sth->fetch(PDO::FETCH_ASSOC, PDO::FETCH_ORI_NEXT);
 }
