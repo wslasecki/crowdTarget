@@ -9,7 +9,6 @@ var animationFunction=videoAnimation;
 var workerId = gup("workerId");
 var sessionId = gup("sessionId");
 var startTime = -1;
-var roundDuration = -1;
 var avrgproximity = 0;
 var misclicks = 0;
 var targetssurvived = 0;
@@ -171,7 +170,8 @@ function tryNextRound() {
 		countdownRunning = false;
 		
 		//send the rounds logs
-		logTrial(workerId, currentRound, sessionId, stillFrameDuration, currentSpeed, starttime, duration, avrgproximity, misses, targetsmissed);
+		var duration = (new Date).getTime() - startTime;
+		logTrial(workerId, currentRound, sessionId, stillFrameDuration, currentSpeed, startTime, duration, avrgproximity, misclicks, currentNumTargets, targetshit, targetssurvived);
 		
 		//begin next round in a few milliseconds
 		clearTimeout(nextRoundTimer);
