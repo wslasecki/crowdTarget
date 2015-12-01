@@ -1,7 +1,9 @@
 //pixels per second
 var speeds = [50,100,150,200,250,300];
 var numTargets = [1,2,3,4,5,6];
+var stillFrameDuration = 2000;
 var animationFunction=stillFrameAnimation;
+//var animationFunction=videoAnimation;
 
 //create combination of every test variable
 combos = [];
@@ -84,27 +86,41 @@ function videoAnimation(newTarget, startLeft, startTop, endLeft, endTop, time) {
 };
 
 function stillFrameAnimation(newTarget, startLeft, startTop, endLeft, endTop, time) {
-	var stillFrameDuration = 2000;
 	var numFrames = time / stillFrameDuration;
 	var leftInc = (endLeft - startLeft) / numFrames;
 	var topInc = (endTop - startTop) / numFrames;
 	
-	var animationInterval = -1;
+	//move target backwards slightly so that it appears in the middle of zone
+	var backSpeed = (numFrames % 1) * Math.random();
+	var newLeft = parseFloat(newTarget.css("left")) - (leftInc * backSpeed);
+	var newTop = parseFloat(newTarget.css("top")) - (topInc * backSpeed);
+	newTarget.css({
+		left: newLeft,
+		top: newTop,
+		display:"none"
+	});
+	
+	//create a function that will animate this specific target
 	var moveTarget = function() {
 		var newLeft = parseFloat(newTarget.css("left")) + leftInc;
 		var newTop = parseFloat(newTarget.css("top")) + topInc;
 		newTarget.css({
 			left: newLeft,
 			top: newTop,
+			display:"block"
 		});
 		
 		if (newTop < 0 || newTop > $("#target-zone").height()) {
-			clearInterval(animationInterval);
 			newTarget.remove();
 			tryNextRound();
+		}else {
+			setTimeout(moveTarget, stillFrameDuration);
 		}
 	}
-	animationInterval = setInterval(moveTarget,stillFrameDuration);
+	
+	//start the animation
+	var initialWaitDuration = 0;
+	setTimeout(moveTarget, initialWaitDuration);
 }
 
 var nextRoundTimer = -1;
