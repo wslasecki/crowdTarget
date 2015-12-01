@@ -1,7 +1,9 @@
 //pixels per second
 var speeds = [50,100,150,200,250,300];
 var numTargets = [1,2,3,4,5,6];
-var animationFunction=stillFrameAnimation;
+var stillFrameDuration = 2000;
+//var animationFunction=stillFrameAnimation;
+var animationFunction=videoAnimation;
 
 //create combination of every test variable
 combos = [];
@@ -84,7 +86,6 @@ function videoAnimation(newTarget, startLeft, startTop, endLeft, endTop, time) {
 };
 
 function stillFrameAnimation(newTarget, startLeft, startTop, endLeft, endTop, time) {
-	var stillFrameDuration = 2000;
 	var numFrames = time / stillFrameDuration;
 	var leftInc = (endLeft - startLeft) / numFrames;
 	var topInc = (endTop - startTop) / numFrames;
