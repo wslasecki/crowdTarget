@@ -1,9 +1,9 @@
 // Logging support functions
 
-function logTrial(worker, trial, session, frametime, speed, starttime, duration, avrgproximity, misses, targetsmissed) {
+function logTrial(worker, trial, session, frametime, speed, starttime, duration, avrgproximity, misses, numtargets, targetshit, targetsmissed) {
   $.ajax({
     url: "php/log_trial.php",
-    data: {worker: worker, trial: trial, session: session, frametime: frametime, speed: speed, starttime: starttime, duration: duration, avrgproximity: avrgproximity, misses:misses, targetsmissed: targetsmissed},
+    data: {worker: worker, trial: trial, session: session, frametime: frametime, speed: speed, starttime: starttime, duration: duration, avrgproximity: avrgproximity, misses:misses, numtargets: numtargets, targetshit: targetshit, targetsmissed: targetsmissed},
     dataType: "text",
     success: function(d) {
       //
