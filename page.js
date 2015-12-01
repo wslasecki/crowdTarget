@@ -1,18 +1,38 @@
-var speed = 100; //pixels per second
-var numTargets = 3;
+//pixels per second
+var speeds = [50,100,150,200,250,300];
+var numTargets = [1,2,3,4,5,6];
+
+//create combination of every test variable
+combos = [];
+for(var i = 0; i < speeds.length; i++){
+	for(var j = 0; j < numTargets.length; j++){
+		combos.push({speed:speeds[i],numTargets:numTargets[j]});
+	}
+}
+//shuffle combos
+for(var i = combos.length - 1; i > 0; i--) {
+	var j = Math.floor(Math.random() * (i + 1));
+	var temp = combos[i];
+	combos[i] = combos[j];
+	combos[j] = temp;
+}
 
 var timeBetweenRounds = 500;
 
+currentRound = 0;
 function startTargets() {
+	var roundParams = combos[currentRound];
+	currentRound++;
+	
   console.log("Starting targets w/ mouse position (x,y): ", mouseX, mouseY);
 
-  for(var i=0; i<numTargets; i++) {
-    addTarget();
+  for(var i=0; i<roundParams.numTargets; i++) {
+    addTarget(roundParams.speed);
   }
 };
 
 var count = 0;
-function addTarget() {
+function addTarget(speed) {
     //randomly create start and end positions
     var startLeft = $("#target-zone").width() * Math.random();
     var startTop = 0;
