@@ -1,6 +1,7 @@
 //pixels per second
 var speeds = [50,100,150,200,250,300];
 var numTargets = [1,2,3,4,5,6];
+var animationFunction=stillFrameAnimation;
 
 //create combination of every test variable
 combos = [];
@@ -60,15 +61,9 @@ function addTarget(speed) {
     newTarget.css({left:startLeft, top:startTop});
     
 	//animate the target
-    newTarget.animate({
-		top: endTop,
-		left: endLeft,
-    }, time, "linear", function() {
-		//on end animation
-        $(this).remove();
-		tryNextRound();
-  	});
+	animationFunction(newTarget, startLeft, startTop, endLeft, endTop, time);
 	
+	//handle the click on the target
 	newTarget.click(function() {
 		newTarget.remove();
 		tryNextRound();
@@ -76,6 +71,41 @@ function addTarget(speed) {
     
     count++;
 };
+
+function videoAnimation(newTarget, startLeft, startTop, endLeft, endTop, time) {
+	newTarget.animate({
+		left: endLeft,
+		top: endTop,
+    }, time, "linear", function() {
+		//on end animation
+        $(this).remove();
+		tryNextRound();
+  	});
+};
+
+function stillFrameAnimation(newTarget, startLeft, startTop, endLeft, endTop, time) {
+	var stillFrameDuration = 2000;
+	var numFrames = time / stillFrameDuration;
+	var leftInc = (endLeft - startLeft) / numFrames;
+	var topInc = (endTop - startTop) / numFrames;
+	
+	var animationInterval = -1;
+	var moveTarget = function() {
+		var newLeft = parseFloat(newTarget.css("left")) + leftInc;
+		var newTop = parseFloat(newTarget.css("top")) + topInc;
+		newTarget.css({
+			left: newLeft,
+			top: newTop,
+		});
+		
+		if (newTop < 0 || newTop > $("#target-zone").height()) {
+			clearInterval(animationInterval);
+			newTarget.remove();
+			tryNextRound();
+		}
+	}
+	animationInterval = setInterval(moveTarget,stillFrameDuration);
+}
 
 var nextRoundTimer = -1;
 function tryNextRound() {
