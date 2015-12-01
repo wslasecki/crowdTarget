@@ -1,18 +1,22 @@
-
 #target-zone {
-  height: 600px;
-  width: 600px;
+  height: 500px;
+  width: 500px;
   float: left;
 }
 
 #feedback {
-  width: 150px;
-  height: 600px;
+  width: 200px;
+  height: 500px;
   float: left;
+  text-align: center;
+}
+
+#start {
+  margin-top: 250px;
 }
 
 .target {
-    position:relative;
+    position:absolute;
     background: url("https://i0.wp.com/edge.alluremedia.com.au/m/k/2014/12/target.png");
     background-size: 50px 50px;
     width:50px;

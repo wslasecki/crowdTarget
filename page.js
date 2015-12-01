@@ -1,7 +1,14 @@
+var speed = 100; //pixels per second
+var numTargets = 3;
+
+var timeBetweenRounds = 500;
 
 function startTargets() {
+  console.log("Starting targets w/ mouse position (x,y): ", mouseX, mouseY);
+
+  for(var i=0; i<numTargets; i++) {
     addTarget();
-    console.log("Mouse location (X,Y): ", mouseX, mouseY);
+  }
 };
 
 var count = 0;
@@ -14,7 +21,7 @@ function addTarget() {
     var endTop = $("#target-zone").height();
     
     var distance = Math.sqrt((endLeft-startLeft)*(endLeft-startLeft) + (endTop-startTop)*(endTop-startTop));
-    var speed = 100; //pixels per second
+    
     var time = (distance/speed) * 1000;
     
     //create a new target over the area
@@ -24,13 +31,23 @@ function addTarget() {
     var newTarget = $("#"+targetid);
     newTarget.css({left:startLeft, top:startTop});
     
+	//animate the target
     newTarget.animate({
 		top: endTop,
 		left: endLeft,
     }, time, "linear", function() {
+		//on end animation
         $(this).remove();
-        alert("done");
+		
+		//start next round if no targets remain
+		if ($(".target").length == 0) {
+			setTimeout(startTargets, timeBetweenRounds);
+		}
   	});
+	
+	newTarget.click(function() {
+		newTarget.hide();
+	})
     
     count++;
 };
@@ -40,7 +57,6 @@ var mouseX = -1;
 var mouseY = -1;
 
 $(document).ready( function(e) {
-console.log("loaded", e);
   mouseX = e.pageX;
   mouseY = e.pageY;
   // Update mouse location on move
@@ -50,8 +66,9 @@ console.log("loaded", e);
     mouseY = e.pageY;
   });
 
-  $(document).on('click', function() {
- 	startTargets();
+  $('#start').on('click', function() {
+    startTargets();
+    $('#start').hide();
   });
 });
 
