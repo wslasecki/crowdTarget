@@ -6,18 +6,18 @@ include('_db.php');
 
 if(isset($_REQUEST['time']) && isset($_REQUEST['worker'])) {
 
-  $worker = $_REQUEST['worker'];
-  $trial = $_REQUEST['trial'];
-  $session = $_REQUEST['session'];
-  $frameTime = $_REQUEST['frametime'];
-  $speed = $_REQUEST['speed'];
-  $startTime = $_REQUEST['starttime'];
-  $duration = $_REQUEST['duration'];
-  $avrgProx = $_REQUEST['proximity'];
-  $ttlMisses = $_REQUEST['misses'];
-  $numTargets = $_REQUEST['numtargets'];
-  $targetsHit = $_REQUEST['targetshit'];
-  $targetsMissed = $_REQUEST['targetsmissed'];
+  $worker = $_REQUEST['worker'];  // worker ID
+  $trial = $_REQUEST['trial'];  // trial (set of targets) ID
+  $session = $_REQUEST['session'];  // session ID
+  $frameTime = $_REQUEST['frametime'];  // duration of single still frame
+  $speed = $_REQUEST['speed'];  // movement speed of the target
+  $startTime = $_REQUEST['starttime'];  // start time of the trial (set of targets) or of the previous target hit
+  $duration = $_REQUEST['duration'];  // time taken to click target (since starttime)
+  $avrgProx = $_REQUEST['proximity'];  // how close to the center of the target the final (hit) click was
+  $ttlMisses = $_REQUEST['misses'];  // number of non-target clicks in this task
+  $numTargets = $_REQUEST['numtargets'];  // total number of targets in this trial
+  $targetsHit = $_REQUEST['targetshit'];  // number of targets hit (clicked)
+  $targetsMissed = $_REQUEST['targetsmissed'];  // number of targets missed (left screen without being clicked)
 
   try {
     $dbh = getDatabaseHandle();
