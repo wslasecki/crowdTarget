@@ -96,8 +96,6 @@ function addTarget(speed) {
 	endLeft = startLeft + ((deltaLeft/deltaDist) * travelDistance);
 	endTop = startTop + ((deltaTop/deltaDist) * travelDistance);
     
-    var mouseDistance = Math.sqrt((startLeft-mouseX)*(startLeft-mouseX) + (startTop-mouseY)*(startTop-mouseY));
-    
     var time = (travelDistance/speed) * 1000;
     
     //create a new target over the area
@@ -129,8 +127,12 @@ function addTarget(speed) {
 		mousePath.push([mouseX,mouseY,timeNow]);
 		var mousePathString = JSON.stringify(mousePath);
 		
+		deltaX = mousePath[0][0] - mouseX;
+		deltaY = mousePath[0][1] - mouseY;
+		var mouseDistance = Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+		
 		//log the target clicked
-		logTarget(workerId, currentRound, assignmentId, stillFrameDuration, currentSpeed, targetid, timeLastHit, duration, startPos, endPos, mousePathString, mouseDistance, proximity, misclicksLastHit);
+		logTarget(workerId, currentRound, assignmentId, stillFrameDuration, currentSpeed, targetshit, timeLastHit, duration, startPos, endPos, mousePathString, mouseDistance, proximity, misclicksLastHit);
 		mousePath = [];
 		timeLastHit = timeNow;
 		misclicksLastHit = 0;

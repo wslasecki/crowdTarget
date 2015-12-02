@@ -11,7 +11,7 @@ if(isset($_REQUEST['worker'])) {
   $session = $_REQUEST['session'];  // session ID
   $frameTime = $_REQUEST['frametime'];  // duration of single still frame
   $speed = $_REQUEST['speed'];  // movement speed of the target
-  $targetIdx = $_REQUEST['targetindex'];  // target ID (numeric index of the current target clicked)
+  $targetIdx = $_REQUEST['targetindex'];  // target ID (unique per trial, count of targets previously hit in this trial)
   $startTime = $_REQUEST['starttime'];  // start time of the trial (set of targets) or of the previous target hit
   $duration = $_REQUEST['duration'];  // time taken to click target (since starttime)
   $stLoc = $_REQUEST['startloc'];  // location of target [x,y] at start of task (target appears, or prior target hit)

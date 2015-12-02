@@ -12,8 +12,8 @@ if(isset($_REQUEST['worker'])) {
   $frameTime = $_REQUEST['frametime'];  // duration of single still frame
   $speed = $_REQUEST['speed'];  // movement speed of the target
   $startTime = $_REQUEST['starttime'];  // start time of the trial (set of targets) or of the previous target hit
-  $duration = $_REQUEST['duration'];  // time taken to click target (since starttime)
-  $avrgProx = $_REQUEST['avrgproximity'];  // how close to the center of the target the final (hit) click was
+  $duration = $_REQUEST['duration'];  // time taken until all targets have disappeared (either by clicking or moving offscreen)
+  $avrgProx = $_REQUEST['avrgproximity'];  // the average proximity (proximity = how close to the center of the target the final (hit) click was)
   $ttlMisses = $_REQUEST['misses'];  // number of non-target clicks in this task
   $numTargets = $_REQUEST['numtargets'];  // total number of targets in this trial
   $targetsHit = $_REQUEST['targetshit'];  // number of targets hit (clicked)
