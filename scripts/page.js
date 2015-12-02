@@ -16,6 +16,8 @@ var misclicks = 0;
 var targetssurvived = 0;
 var targetshit = 0;
 var mousePath = [];
+var timeLastHit = startTime;
+var misclicksLastHit = 0;
 
 //create combination of every test variable
 combos = [];
@@ -51,6 +53,8 @@ function startTargets() {
 		targetssurvived = 0;
 		targetshit = 0;
 		mousePath = [[mouseX,mouseY,startTime]];
+		timeLastHit = startTime;
+		misclicksLastHit = 0;
 
 		console.log("Starting targets w/ mouse position (x,y): ", mouseX, mouseY);
 
@@ -74,6 +78,7 @@ function finished() {
 var count = 0;
 function addTarget(speed) {
     //randomly create start and end positions
+	var travelDistance = $("#target-zone").height();
 	var targetW2 = 25; var targetH2 = 25;
 	var zonePos = $("#target-zone").position();
 	var targetOffsetLeft = zonePos.left - targetW2;
@@ -88,12 +93,12 @@ function addTarget(speed) {
 	var deltaLeft = endLeft - startLeft;
 	var deltaTop = endTop - startTop;
 	var deltaDist = Math.sqrt(deltaLeft*deltaLeft + deltaTop*deltaTop);
-	endLeft = startLeft + ((deltaLeft/deltaDist) * $("#target-zone").height());
-	endTop = startTop + ((deltaTop/deltaDist) * $("#target-zone").height());
+	endLeft = startLeft + ((deltaLeft/deltaDist) * travelDistance);
+	endTop = startTop + ((deltaTop/deltaDist) * travelDistance);
     
-    var distance = Math.sqrt((endLeft-startLeft)*(endLeft-startLeft) + (endTop-startTop)*(endTop-startTop));
+    var mouseDistance = Math.sqrt((startLeft-mouseX)*(startLeft-mouseX) + (startTop-mouseY)*(startTop-mouseY));
     
-    var time = (distance/speed) * 1000;
+    var time = (travelDistance/speed) * 1000;
     
     //create a new target over the area
     var targetid = "target"+count;
@@ -116,16 +121,19 @@ function addTarget(speed) {
 		var proximity = Math.sqrt(deltaX*deltaX + deltaY*deltaY);
 		avrgproximity += proximity;
 		
-		var duration = (new Date).getTime() - startTime;
+		var timeNow = (new Date).getTime();
+		var duration = timeNow - timeLastHit;
 		var startPos = JSON.stringify([startLeft,startTop]);
-		var endPos = JSON.stringify([endLeft,endTop]);
+		var endPos = JSON.stringify([parseFloat(newTarget.css("left")),parseFloat(newTarget.css("top"))]);
 		
-		mousePath.push([mouseX,mouseY,(new Date).getTime()]);
+		mousePath.push([mouseX,mouseY,timeNow]);
 		var mousePathString = JSON.stringify(mousePath);
 		
 		//log the target clicked
-		logTarget(workerId, currentRound, assignmentId, stillFrameDuration, currentSpeed, targetid, startTime, duration, startPos, endPos, mousePathString, distance, proximity, misclicks);
+		logTarget(workerId, currentRound, assignmentId, stillFrameDuration, currentSpeed, targetid, timeLastHit, duration, startPos, endPos, mousePathString, mouseDistance, proximity, misclicksLastHit);
 		mousePath = [];
+		timeLastHit = timeNow;
+		misclicksLastHit = 0;
 		
 		//remove the target
 		newTarget.stop();
@@ -268,6 +276,7 @@ $(document).ready( function(e) {
 	$("#target-zone").click(function(e) {
 		if (e.target.id == "target-zone") { 
 			misclicks++;
+			misclicksLastHit++;
 			$("#target-zone").animate({"backgroundColor":"#000"},50,"linear",function(){
 				$("#target-zone").animate({"backgroundColor":"#FFF"},50,"linear");
 			});
