@@ -190,7 +190,6 @@ function tryNextRound() {
 		//stop the countdown timer
 		$("#countdown-bar").stop();
 		$("#countdown-bar").css({width:"0%"});
-		countdownRunning = false;
 		
 		//send the rounds logs
 		var duration = (new Date).getTime() - startTime;
@@ -206,9 +205,13 @@ function tryNextRound() {
 }
 
 // Start the countdown bar animation
-var countdownRunning = false;
 function startCountdown() {
-	if( !countdownRunning ) {
+	//we only want it to animate once per still frame
+	//but this function gets called N times per still frame
+	//if the bar is nearly full, then animation was likely started a few milliseconds ago.
+	//instead only start the animation if it is less than half way
+	var barWPercent = $("#countdown-bar").width() / $("#countdown-bar").parent().width() * 100;
+	if( barWPercent < 50 ) {
 		countdownRunning = true;
 		$("#countdown-bar").stop();
 		$("#countdown-bar").css({width:"100%"});
