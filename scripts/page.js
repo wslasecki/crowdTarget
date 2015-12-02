@@ -45,12 +45,12 @@ function startTargets() {
 		currentNumTargets = roundParams.numTargets;
 		
 		//clear logging variables
-		startTime =  (new Date).getTime();
+		startTime = (new Date).getTime();
 		avrgproximity = 0;
 		misclicks = 0;
 		targetssurvived = 0;
 		targetshit = 0;
-		mousePath = [];
+		mousePath = [[mouseX,mouseY,startTime]];
 
 		console.log("Starting targets w/ mouse position (x,y): ", mouseX, mouseY);
 
@@ -120,6 +120,7 @@ function addTarget(speed) {
 		var startPos = JSON.stringify([startLeft,startTop]);
 		var endPos = JSON.stringify([endLeft,endTop]);
 		
+		mousePath.push([mouseX,mouseY,(new Date).getTime()]);
 		var mousePathString = JSON.stringify(mousePath);
 		
 		//log the target clicked
@@ -254,7 +255,7 @@ $(document).ready( function(e) {
     mouseX = e.pageX;
     mouseY = e.pageY;
 	//log mouse location
-	mousePath.push([mouseX,mouseY]);
+	mousePath.push([mouseX,mouseY,(new Date).getTime()]);
   });
 
   $('#start').on('click', function() {
