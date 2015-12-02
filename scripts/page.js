@@ -1,7 +1,7 @@
 //pixels per second
 var speeds = [50,100,150,200,250,300];
 var numTargets = [1,2,3,4,5,6];
-var stillFrameDuration = parseInt(gup("frameDuration"));
+var stillFrameDuration = parseInt(gup("frameDuration", 0));
 var animationFunction=stillFrameAnimation;
 if (stillFrameDuration == 0) {
 	animationFunction=videoAnimation;
@@ -63,6 +63,10 @@ function startTargets() {
 };
 
 function finished() {
+	$('#description').hide();
+	$('#buttondesc').html("Press submit to finish the task.");
+	$('#buttondesc').show();
+	
 	alert("Thanks For Playing");
 	$("#submit").show();
 }
@@ -70,11 +74,16 @@ function finished() {
 var count = 0;
 function addTarget(speed) {
     //randomly create start and end positions
-    var startLeft = $("#target-zone").width() * Math.random();
-    var startTop = 0;
+	var targetW2 = 25; var targetH2 = 25;
+	var zonePos = $("#target-zone").position();
+	var targetOffsetLeft = zonePos.left - targetW2;
+	var targetOffsetTop = zonePos.top - targetH2;
+	
+    var startLeft = ($("#target-zone").width() * Math.random()) + targetOffsetLeft;
+    var startTop = targetOffsetTop;
     
-    var endLeft = $("#target-zone").width() * Math.random();
-    var endTop = $("#target-zone").height();
+    var endLeft = ($("#target-zone").width() * Math.random()) + targetOffsetLeft;
+    var endTop = $("#target-zone").height() + targetOffsetTop;
     
     var distance = Math.sqrt((endLeft-startLeft)*(endLeft-startLeft) + (endTop-startTop)*(endTop-startTop));
     
@@ -238,6 +247,7 @@ $(document).ready( function(e) {
   $('#start').on('click', function() {
     startTargets();
     $('#start').hide();
+	$('#buttondesc').hide();
   });
 
   	//handle misclicks
