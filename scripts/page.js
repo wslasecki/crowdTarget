@@ -84,6 +84,12 @@ function addTarget(speed) {
     
     var endLeft = ($("#target-zone").width() * Math.random()) + targetOffsetLeft;
     var endTop = $("#target-zone").height() + targetOffsetTop;
+	
+	var deltaLeft = endLeft - startLeft;
+	var deltaTop = endTop - startTop;
+	var deltaDist = Math.sqrt(deltaLeft*deltaLeft + deltaTop*deltaTop);
+	endLeft = startLeft + ((deltaLeft/deltaDist) * $("#target-zone").height());
+	endTop = startTop + ((deltaTop/deltaDist) * $("#target-zone").height());
     
     var distance = Math.sqrt((endLeft-startLeft)*(endLeft-startLeft) + (endTop-startTop)*(endTop-startTop));
     
@@ -144,8 +150,11 @@ function videoAnimation(newTarget, startLeft, startTop, endLeft, endTop, time) {
 
 function stillFrameAnimation(newTarget, startLeft, startTop, endLeft, endTop, time) {
 	var numFrames = time / stillFrameDuration;
-	var leftInc = (endLeft - startLeft) / numFrames;
-	var topInc = (endTop - startTop) / numFrames;
+	var deltaLeft = endLeft - startLeft;
+	var deltaTop = endTop - startTop;
+	var leftInc = deltaLeft / numFrames;
+	var topInc = deltaTop / numFrames;
+	var distance = Math.sqrt(deltaLeft*deltaLeft + deltaTop*deltaTop);
 	
 	//move target backwards slightly so that it appears in the middle of zone
 	var backSpeed = (numFrames % 1) * Math.random();
@@ -177,8 +186,12 @@ function stillFrameAnimation(newTarget, startLeft, startTop, endLeft, endTop, ti
 			display:"block"
 		});
 		
-		//remove if the targets have gone off screen
-		if (newTop < 0 || newTop > $("#target-zone").height()) {
+		//remove if the targets have gone past its end point
+		var newDeltaLeft = newLeft - startLeft;
+		var newDeltaTop = newTop - startTop;
+		var newDistance = Math.sqrt(newDeltaLeft*newDeltaLeft + newDeltaTop*newDeltaTop);
+		
+		if (newDistance >= distance) {
 			targetssurvived++;
 			
 			newTarget.remove();
