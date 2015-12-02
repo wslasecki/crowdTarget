@@ -7,7 +7,7 @@ var animationFunction=videoAnimation;
 
 //initialize logging vars
 var workerId = gup("workerId");
-var sessionId = gup("sessionId");
+var assignmentId = gup("assignmentId");
 var startTime = -1;
 var avrgproximity = 0;
 var misclicks = 0;
@@ -105,7 +105,7 @@ function addTarget(speed) {
 		var mousePathString = JSON.stringify(mousePath);
 		
 		//log the target clicked
-		logTarget(workerId, currentRound, sessionId, stillFrameDuration, currentSpeed, targetid, startTime, duration, startPos, endPos, mousePathString, distance, proximity, misclicks);
+		logTarget(workerId, currentRound, assignmentId, stillFrameDuration, currentSpeed, targetid, startTime, duration, startPos, endPos, mousePathString, distance, proximity, misclicks);
 		mousePath = [];
 		
 		//remove the target
@@ -195,7 +195,7 @@ function tryNextRound() {
 		if (targetshit > 0) {
 			avrgproximity /= targetshit;
 		}
-		logTrial(workerId, currentRound, sessionId, stillFrameDuration, currentSpeed, startTime, duration, avrgproximity, misclicks, currentNumTargets, targetshit, targetssurvived);
+		logTrial(workerId, currentRound, assignmentId, stillFrameDuration, currentSpeed, startTime, duration, avrgproximity, misclicks, currentNumTargets, targetshit, targetssurvived);
 		
 		//begin next round in a few milliseconds
 		clearTimeout(nextRoundTimer);
