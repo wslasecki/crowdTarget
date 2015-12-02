@@ -4,7 +4,7 @@ ini_set("display_errors", 1);
 
 include('_db.php');
 
-if(isset($_REQUEST['time']) && isset($_REQUEST['worker'])) {
+if(isset($_REQUEST['worker'])) {
 
   $worker = $_REQUEST['worker'];  // worker ID
   $trial = $_REQUEST['trial'];  // trial (set of targets) ID
@@ -27,10 +27,11 @@ if(isset($_REQUEST['time']) && isset($_REQUEST['worker'])) {
     echo $e->getMessage();
   }
 
-if($dbh) {
+  if($dbh) {
     $sth = $dbh->prepare ("INSERT INTO targethits(worker, trial, session, frametime, speed, targetindex, starttime, duration, startloc, endloc, path, distance, proximity, misses) VALUES (:worker, :trial, :session, :frameTime, :speed, :targetIdx, :startTime, :duration, :stLoc, :endLoc, :path, :dist, :prox, :misses)");
-    $sth->execute(array(':worker'=>$worker, ':trial'=>$trial, ':session'=>$session, ':frameTime'=>$frameTime, ':speed'=>$speed, ':targetIdx'=>$targetIdx, ':startTime'=>$startTime, ':duration'=>$duration, ':stLoc'=>$stLoc, ':endLoc'=>$endLoc, ':path'=>$path, ':dist'=>$dist, ':prox'=>$prox, ':misses'=>$misses);
+    $sth->execute(array(':worker'=>$worker, ':trial'=>$trial, ':session'=>$session, ':frameTime'=>$frameTime, ':speed'=>$speed, ':targetIdx'=>$targetIdx, ':startTime'=>$startTime, ':duration'=>$duration, ':stLoc'=>$stLoc, ':endLoc'=>$endLoc, ':path'=>$path, ':dist'=>$dist, ':prox'=>$prox, ':misses'=>$misses));
     $row = $sth->fetch(PDO::FETCH_ASSOC, PDO::FETCH_ORI_NEXT);
+  }
 }
 
 ?>

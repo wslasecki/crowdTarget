@@ -4,7 +4,7 @@ ini_set("display_errors", 1);
 
 include('_db.php');
 
-if(isset($_REQUEST['time']) && isset($_REQUEST['worker'])) {
+if(isset($_REQUEST['worker'])) {
 
   $worker = $_REQUEST['worker'];  // worker ID
   $trial = $_REQUEST['trial'];  // trial (set of targets) ID
@@ -13,7 +13,7 @@ if(isset($_REQUEST['time']) && isset($_REQUEST['worker'])) {
   $speed = $_REQUEST['speed'];  // movement speed of the target
   $startTime = $_REQUEST['starttime'];  // start time of the trial (set of targets) or of the previous target hit
   $duration = $_REQUEST['duration'];  // time taken to click target (since starttime)
-  $avrgProx = $_REQUEST['proximity'];  // how close to the center of the target the final (hit) click was
+  $avrgProx = $_REQUEST['avrgproximity'];  // how close to the center of the target the final (hit) click was
   $ttlMisses = $_REQUEST['misses'];  // number of non-target clicks in this task
   $numTargets = $_REQUEST['numtargets'];  // total number of targets in this trial
   $targetsHit = $_REQUEST['targetshit'];  // number of targets hit (clicked)
@@ -25,10 +25,12 @@ if(isset($_REQUEST['time']) && isset($_REQUEST['worker'])) {
     echo $e->getMessage();
   }
 
-if($dbh) {
+  if($dbh) {
     $sth = $dbh->prepare ("INSERT INTO trials (worker, trial, session, frametime, speed, starttime, duration, avrgproximity, misses, numnargets, targetshit, targetsmissed) VALUES (:worker, :trial, :session, :frameTime, :speed, :startTime, :duration, :avrgProx, :misses, :numTargets, :targetsHit, :targetsMissed)");
-    $sth->execute(array(':worker'=>$worker, ':trial'=>$trial, ':session'=>$session, ':frameTime'=>$frameTime, ':speed'=>$speed, ':startTime'=>$startTime, ':duration'=>$duration, ':avrgProx'=>$avrgProx, ':misses'=>$misses, ':numTargets'=>$numTargets, ':targetsHit'=>$targetsHit, ':targetsMissed'=>$targetsMissed);
+    $sth->execute(array(':worker'=>$worker, ':trial'=>$trial, ':session'=>$session, ':frameTime'=>$frameTime, ':speed'=>$speed, ':startTime'=>$startTime, ':duration'=>$duration, ':avrgProx'=>$avrgProx, ':misses'=>$misses, ':numTargets'=>$numTargets, ':targetsHit'=>$targetsHit, ':targetsMissed'=>$targetsMissed));
     $row = $sth->fetch(PDO::FETCH_ASSOC, PDO::FETCH_ORI_NEXT);
+  }
+
 }
 
 ?>
