@@ -26,8 +26,8 @@ if(isset($_REQUEST['worker'])) {
   }
 
   if($dbh) {
-    $sth = $dbh->prepare ("INSERT INTO trials (worker, trial, session, frametime, speed, starttime, duration, avrgproximity, misses, numnargets, targetshit, targetsmissed) VALUES (:worker, :trial, :session, :frameTime, :speed, :startTime, :duration, :avrgProx, :misses, :numTargets, :targetsHit, :targetsMissed)");
-    $sth->execute(array(':worker'=>$worker, ':trial'=>$trial, ':session'=>$session, ':frameTime'=>$frameTime, ':speed'=>$speed, ':startTime'=>$startTime, ':duration'=>$duration, ':avrgProx'=>$avrgProx, ':misses'=>$misses, ':numTargets'=>$numTargets, ':targetsHit'=>$targetsHit, ':targetsMissed'=>$targetsMissed));
+    $sth = $dbh->prepare ("INSERT INTO trials (worker, trial, session, frametime, speed, starttime, duration, avrgproximity, misses, numnargets, targetshit, targetsmissed) VALUES (:worker, :trial, :session, :frameTime, :speed, :startTime, :duration, :avrgProx, :ttlMisses, :numTargets, :targetsHit, :targetsMissed)");
+    $sth->execute(array(':worker'=>$worker, ':trial'=>$trial, ':session'=>$session, ':frameTime'=>$frameTime, ':speed'=>$speed, ':startTime'=>$startTime, ':duration'=>$duration, ':avrgProx'=>$avrgProx, ':ttlMisses'=>$ttlMisses, ':numTargets'=>$numTargets, ':targetsHit'=>$targetsHit, ':targetsMissed'=>$targetsMissed));
     $row = $sth->fetch(PDO::FETCH_ASSOC, PDO::FETCH_ORI_NEXT);
   }
 
