@@ -6,20 +6,20 @@ include('_db.php');
 
 if(isset($_REQUEST['time']) && isset($_REQUEST['worker'])) {
 
-  $worker = $_REQUEST['worker'];
-  $trial = $_REQUEST['trial'];
-  $session = $_REQUEST['session'];
-  $frameTime = $_REQUEST['frametime'];
-  $speed = $_REQUEST['speed'];
-  $targetIdx = $_REQUEST['targetindex'];
-  $startTime = $_REQUEST['starttime'];
-  $duration = $_REQUEST['duration'];
-  $stLoc = $_REQUEST['startloc'];
-  $endLoc = $_REQUEST['endloc'];
-  $path = $_REQUEST['path'];
-  $dist = $_REQUEST['distance'];
-  $prox = $_REQUEST['proximity'];
-  $misses = $_REQUEST['misses'];
+  $worker = $_REQUEST['worker'];  // worker ID
+  $trial = $_REQUEST['trial'];  // trial (set of targets) ID
+  $session = $_REQUEST['session'];  // session ID
+  $frameTime = $_REQUEST['frametime'];  // duration of single still frame
+  $speed = $_REQUEST['speed'];  // movement speed of the target
+  $targetIdx = $_REQUEST['targetindex'];  // target ID (numeric index of the current target clicked)
+  $startTime = $_REQUEST['starttime'];  // start time of the trial (set of targets) or of the previous target hit
+  $duration = $_REQUEST['duration'];  // time taken to click target (since starttime)
+  $stLoc = $_REQUEST['startloc'];  // location of mouse pointer (x,y) at start of task (target appears, or prior target hit)
+  $endLoc = $_REQUEST['endloc'];  // location of the mouse pointer (x,y) at the end of the task (target hit)
+  $path = $_REQUEST['path'];  // string containing the all of the locations the mouse was in between the start and the end of this task (format: x1,y1;x2,y2;...)
+  $dist = $_REQUEST['distance'];  // distance between starting mouse location and ending mouse location
+  $prox = $_REQUEST['proximity'];  // how close to the center of the target the final (hit) click was
+  $misses = $_REQUEST['misses'];  // number of non-target clicks in this task
 
   try {
     $dbh = getDatabaseHandle();
