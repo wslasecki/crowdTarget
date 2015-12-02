@@ -64,6 +64,7 @@ function startTargets() {
 
 function finished() {
 	alert("Thanks For Playing");
+	$("#submit").show();
 }
 
 var count = 0;
