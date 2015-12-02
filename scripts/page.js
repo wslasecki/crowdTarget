@@ -13,6 +13,7 @@ var avrgproximity = 0;
 var misclicks = 0;
 var targetssurvived = 0;
 var targetshit = 0;
+var mousePath = [];
 
 //create combination of every test variable
 combos = [];
@@ -47,6 +48,7 @@ function startTargets() {
 		misclicks = 0;
 		targetssurvived = 0;
 		targetshit = 0;
+		mousePath = [];
 
 		console.log("Starting targets w/ mouse position (x,y): ", mouseX, mouseY);
 
@@ -86,8 +88,27 @@ function addTarget(speed) {
 	animationFunction(newTarget, startLeft, startTop, endLeft, endTop, time);
 	
 	//handle the click on the target
-	newTarget.click(function() {
+	newTarget.click(function(mevent) {
+		//calculate log variables
 		targetshit++;
+		
+		var deltaX = mevent.offsetX - (newTarget.width()/2);
+		var deltaY = mevent.offsetY - (newTarget.height()/2);
+		
+		var proximity = Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+		avrgproximity += proximity;
+		
+		var duration = (new Date).getTime() - startTime;
+		var startPos = JSON.stringify([startLeft,startTop]);
+		var endPos = JSON.stringify([endLeft,endTop]);
+		
+		var mousePathString = JSON.stringify(mousePath);
+		
+		//log the target clicked
+		logTarget(workerId, currentRound, sessionId, stillFrameDuration, currentSpeed, targetid, startTime, duration, startPos, endPos, mousePathString, distance, proximity, misclicks);
+		mousePath = [];
+		
+		//remove the target
 		newTarget.stop();
 		newTarget.remove();
 		tryNextRound();
@@ -171,6 +192,9 @@ function tryNextRound() {
 		
 		//send the rounds logs
 		var duration = (new Date).getTime() - startTime;
+		if (targetshit > 0) {
+			avrgproximity /= targetshit;
+		}
 		logTrial(workerId, currentRound, sessionId, stillFrameDuration, currentSpeed, startTime, duration, avrgproximity, misclicks, currentNumTargets, targetshit, targetssurvived);
 		
 		//begin next round in a few milliseconds
@@ -201,6 +225,8 @@ $(document).ready( function(e) {
     //console.log("e.pageX: " + e.pageX + ", e.pageY: " + e.pageY); 
     mouseX = e.pageX;
     mouseY = e.pageY;
+	//log mouse location
+	mousePath.push([mouseX,mouseY]);
   });
 
   $('#start').on('click', function() {
