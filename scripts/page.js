@@ -64,7 +64,7 @@ function startTargets() {
 	} else {
 		finished();
 	}
-};
+}
 
 function finished() {
 	$('#description').hide();
@@ -109,7 +109,7 @@ function addTarget(speed) {
 	animationFunction(newTarget, startLeft, startTop, endLeft, endTop, time);
 	
 	//handle the click on the target
-	newTarget.click(function(mevent) {
+	newTarget.mousedown(function(mevent) {
 		//calculate log variables
 		targetshit++;
 		
@@ -141,10 +141,10 @@ function addTarget(speed) {
 		newTarget.stop();
 		newTarget.remove();
 		tryNextRound();
-	})
+	});
     
     count++;
-};
+}
 
 function videoAnimation(newTarget, startLeft, startTop, endLeft, endTop, time) {
 	newTarget.animate({
@@ -157,7 +157,7 @@ function videoAnimation(newTarget, startLeft, startTop, endLeft, endTop, time) {
         $(this).remove();
 		tryNextRound();
   	});
-};
+}
 
 function stillFrameAnimation(newTarget, startLeft, startTop, endLeft, endTop, time) {
 	var numFrames = time / stillFrameDuration;
@@ -210,7 +210,7 @@ function stillFrameAnimation(newTarget, startLeft, startTop, endLeft, endTop, ti
 		}else {
 			setTimeout(moveTarget, stillFrameDuration);
 		}
-	}
+	};
 	
 	//start the animation
 	var initialWaitDuration = 0;
