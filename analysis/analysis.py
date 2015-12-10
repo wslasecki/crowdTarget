@@ -1,0 +1,81 @@
+import csv
+import json
+
+#to extract csvs from the databse
+#SELECT * FROM targethits INTO OUTFILE '/tmp/targethits.csv' FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n';
+
+class TargetHit:
+    def __init__(self, ID, workerId, trialId, assignmentId, frameDuration, targetSpeed, targetCount, startTime, timeTakenToClick, startTargetPos, endTargetPos, mousePath, mouseDistance, proximity, misclicks):
+        self.ID = ID
+        self.workerId = workerId
+        self.trialId = trialId
+        self.assignmentId = assignmentId
+        self.frameDuration = frameDuration
+        self.targetSpeed = targetSpeed
+        self.targetCount = targetCount
+        self.startTime = startTime
+        self.timeTakenToClick = timeTakenToClick
+        self.startTargetPos = startTargetPos
+        self.endTargetPos = endTargetPos
+        self.mousePath = mousePath
+        self.mouseDistance = mouseDistance
+        self.proximity = proximity
+        self.misclicks = misclicks
+
+class Trial:
+    def __init__(self, ID, workerId, trialId, assignmentId, frameDuration, targetSpeed, startTime, trialDuration, avgProximity, misclicks, targetTotalCount, targetHitCount, targetMissedCount):
+        self.ID = ID
+        self.workerId = workerId
+        self.trialId = trialId
+        self.assignmentId = assignmentId
+        self.frameDuration = frameDuration
+        self.targetSpeed = targetSpeed
+        self.startTime = startTime
+        self.trialDuration = trialDuration
+        self.avgProximity = avgProximity
+        self.misclicks = misclicks
+        self.targetTotalCount = targetTotalCount
+        self.targetHitCount = targetHitCount
+        self.targetMissedCount = targetMissedCount
+
+targethits = []
+with open("C:\\Users\\elliot\\Desktop\\targethits.csv", 'rb') as csvfile:
+    csvreader = csv.reader(csvfile)
+    for row in csvreader:
+        hit = TargetHit(row[0],
+                        row[1],
+                        row[2],
+                        row[3],
+                        int(row[4]),
+                        int(row[5]),
+                        int(row[6]),
+                        int(row[7]),
+                        int(row[8]),
+                        json.loads(row[9]),
+                        json.loads(row[10]),
+                        json.loads(row[11]),
+                        float(row[12]),
+                        float(row[13]),
+                        int(row[14]))
+        targethits.append(hit)
+
+trials = []
+with open("C:\\Users\\elliot\\Desktop\\trials.csv", 'rb') as csvfile:
+    csvreader = csv.reader(csvfile)
+    for row in csvreader:
+        trial = Trial(  row[0],
+                        row[1],
+                        row[2],
+                        row[3],
+                        int(row[4]),
+                        int(row[5]),
+                        int(row[6]),
+                        int(row[7]),
+                        float(row[8]),
+                        int(row[9]),
+                        int(row[10]),
+                        int(row[11]),
+                        int(row[12]))
+        trials.append(trial)
+
+print "loaded"
