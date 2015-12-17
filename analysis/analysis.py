@@ -1,5 +1,6 @@
 import csv
 import json
+import sys
 
 #to extract csvs from the databse
 #SELECT * FROM targethits INTO OUTFILE '/tmp/targethits.csv' FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n';
@@ -38,8 +39,9 @@ class Trial:
         self.targetHitCount = targetHitCount
         self.targetMissedCount = targetMissedCount
 
+datadir = sys.argv[1]
 targethits = []
-with open("C:\\Users\\elliot\\Desktop\\targethits.csv", 'rb') as csvfile:
+with open(datadir+"/targethits.csv", 'rb') as csvfile:
     csvreader = csv.reader(csvfile)
     for row in csvreader:
         hit = TargetHit(row[0],
@@ -60,7 +62,7 @@ with open("C:\\Users\\elliot\\Desktop\\targethits.csv", 'rb') as csvfile:
         targethits.append(hit)
 
 trials = []
-with open("C:\\Users\\elliot\\Desktop\\trials.csv", 'rb') as csvfile:
+with open(datadir+"/trials.csv", 'rb') as csvfile:
     csvreader = csv.reader(csvfile)
     for row in csvreader:
         trial = Trial(  row[0],
@@ -79,3 +81,42 @@ with open("C:\\Users\\elliot\\Desktop\\trials.csv", 'rb') as csvfile:
         trials.append(trial)
 
 print "loaded"
+
+## WSL's terrible take on analytics
+proxByTargetCount = {}
+for e in targethits:
+    idx = e.targetCount
+    try:
+        proxByTargetCount[idx]
+    except KeyError:
+        proxByTargetCount[idx] = []
+    proxByTargetCount[idx].append(e.proximity)
+
+proxByTrial = {}
+for e in trials:
+    idx = e.targetTotalCount
+    try:
+        proxByTrial[idx]
+    except KeyError:
+        proxByTrial[idx] = []
+    proxByTrial[idx].append(e.avgProximity)
+
+
+##############
+
+print "Tabulating..."
+
+for key in proxByTargetCount:
+    #print "%s -> %s" % (key, proxByTargetCount[key])
+    ttlProx = 0
+    for val in proxByTargetCount[key]:
+        ttlProx += val
+    print "AVERAGE PROX for %s targets = %f" % (key, ttlProx/len(proxByTargetCount[key]))
+
+for key in proxByTrial:
+    ttlAvgProx = 0
+    for val in proxByTrial[key]:
+        ttlAvgProx += val
+    print "avrgProx from trial with %s targets = %f" % (key, ttlAvgProx/len(proxByTrial[key]))
+
+print "Done."
