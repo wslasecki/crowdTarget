@@ -92,15 +92,35 @@ for e in targethits:
         proxByTargetCount[idx] = []
     proxByTargetCount[idx].append(e.proximity)
 
-proxByTrial = {}
-for e in trials:
-    idx = e.targetTotalCount
-    try:
-        proxByTrial[idx]
-    except KeyError:
-        proxByTrial[idx] = []
-    proxByTrial[idx].append(e.avgProximity)
 
+## Handle trial data ##
+
+proxByTrial = {}
+def addToByTrial( addVal ):
+    idx1 = e.targetTotalCount
+    try:
+        proxByTrial[idx1]
+    except KeyError:
+        proxByTrial[idx1] = {}
+
+    idx2 = e.targetSpeed
+    try:
+        proxByTrial[idx1][idx2]
+    except KeyError:
+        proxByTrial[idx1][idx2] = []
+
+    proxByTrial[idx1][idx2].append(addVal)
+
+for e in trials:
+    # Measure prox for completed trials
+    if e.targetHitCount == e.targetTotalCount:
+        addToByTrial(e.avgProximity)
+
+    # Measure % completed trials
+    #if e.targetHitCount == e.targetTotalCount:
+    #    addToByTrial(100.0)
+    #else:
+    #    addToByTrial(0.0)
 
 ##############
 
@@ -113,10 +133,16 @@ for key in proxByTargetCount:
         ttlProx += val
     print "AVERAGE PROX for %s targets = %f" % (key, ttlProx/len(proxByTargetCount[key]))
 
-for key in proxByTrial:
-    ttlAvgProx = 0
-    for val in proxByTrial[key]:
-        ttlAvgProx += val
-    print "avrgProx from trial with %s targets = %f" % (key, ttlAvgProx/len(proxByTrial[key]))
+print "Num Targets, Speed, Trial Duration"
+for key1 in proxByTrial:
+    for key2 in proxByTrial[key1]:
+        ttlAvgProx = 0
+        for val in proxByTrial[key1][key2]:
+            ttlAvgProx += val
+            #print "avrgProx from trial with %s targets, speed %s, and duration %s (with %d datapoints) = %f" % (key1, key2, key3, len(proxByTrial[key1][key2][key3]), ttlAvgProx/len(proxByTrial[key1][key2][key3]))
+        #print "%s,%s,%s,%f" % (key1, key2, key3, ttlAvgProx/len(proxByTrial[key1][key2][key3]))
+        print "%s,%s,%f" % (key1, key2, ttlAvgProx/len(proxByTrial[key1][key2]))
 
-print "Done."
+
+print "\nDone."
+
