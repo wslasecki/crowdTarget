@@ -133,15 +133,30 @@ for key in proxByTargetCount:
         ttlProx += val
     print "AVERAGE PROX for %s targets = %f" % (key, ttlProx/len(proxByTargetCount[key]))
 
-print "Num Targets, Speed, Trial Duration"
-for key1 in proxByTrial:
-    for key2 in proxByTrial[key1]:
+# First, print the header
+#print "Num Targets, Speed, Trial Duration"
+print '',
+for key1 in sorted(proxByTrial):
+    for key2 in sorted(proxByTrial[key1]):
+        print key2,
+    break  # WSL: a little hacky, but should work for most of the cases we need
+print ''
+
+# Now print the data
+for key1 in sorted(proxByTrial):
+    firstInRow = True
+    for key2 in sorted(proxByTrial[key1]):
         ttlAvgProx = 0
         for val in proxByTrial[key1][key2]:
             ttlAvgProx += val
             #print "avrgProx from trial with %s targets, speed %s, and duration %s (with %d datapoints) = %f" % (key1, key2, key3, len(proxByTrial[key1][key2][key3]), ttlAvgProx/len(proxByTrial[key1][key2][key3]))
+        if firstInRow:
+            print key1,
+            firstInRow = False
         #print "%s,%s,%s,%f" % (key1, key2, key3, ttlAvgProx/len(proxByTrial[key1][key2][key3]))
-        print "%s,%s,%f" % (key1, key2, ttlAvgProx/len(proxByTrial[key1][key2]))
+        #print "%s,%s,%f" % (key1, key2, ttlAvgProx/len(proxByTrial[key1][key2]))
+        print ttlAvgProx/len(proxByTrial[key1][key2]),
+    print ''
 
 
 print "\nDone."
