@@ -2,10 +2,10 @@ import csv
 import json
 import sys
 import collections
+import os
 
-#to extract csvs from the databse
+#to extract csvs from the databs
 #SELECT * FROM targethits INTO OUTFILE '/tmp/targethits.csv' FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n';
-#approvedAssignments = ["3BEFOD78W7YZXVWWBBG3Y4278IZM40","3BDCF01OGYZVPKSV063VEGRP3E8YLV","3VJ40NV2QJS7EJWY3SWOYG34JHVOTD","3D4CH1LGEBY02R6MH3EZ27TQYO19GB","3ZOTGHDK5JG6ZJJJESRYOB7IHYHOSO","3K772S5NP9GVXJSE9KC3FL624LUHES","3QECW5O0KI6L69QGYD0PPA3D2MQT5D","3PIWWX1FJKBZZ59WBLQFOEZ9MLUJJK","3L4D84MIL0X38ZE6NLNUC1JU9TQJHF","37TRT2X24RWTHMBKNTDYQQGWEGLBJR","340UGXU9DZ6H4GKK498CY4JEYOZVUD","3VELCLL3GLOCZM7W26TO5GBVZXE1FW","3P4RDNWND6B34UPQT35FCDK9965JI8","3FK0YFF9P0LHHV9K9ZIHUQLXCV8VV2","33NF62TLXK7UAPFET6QRPTZM1AUJKJ","3WJEQKOXA97H3VQORQ7WRF042H11AJ","3IXEICO793OHPDQU3WAUHGHDYH1T6T","3EF8EXOTT20S4OTSLWK9KE3NS4V1JZ","3MMN5BL1W09EFZDSBXBKOZA1UI3M3F","3VA45EW49OS65ZKP19CESAK9RY51OI","3UNH76FOCTAFV2AG0I4AET6E3JYYMX","3JWH6J9I9TIP0C252R5QJXXDN0QBNV","3TUI152ZZCS9QBX5GM4IHFF96ZN1QQ","3CPLWGV3MP46CJN847RUSR2NZ0O9NK","39L1G8WVWRWHJAR3IBSM47MYW7813M","3HMVI3QICKXIZDOR7WLCU1IB5841YT","3D8YOU6S9FPWPQ5J3104MC3FHV96UY","320DUZ38G8RP83JV3F5CR17TUTDJGG","37UEWGM5HUD92CC5T1TIM5PE2LP1RR","3J4Q2Z4UTZ82RCD8DAT3A5532CVQWD","39KFRKBFIO03V5VSDYJN6XVJYJDYOC","3U5NZHP4LS7ZUAH4IYSE9X56ISWHPD","37FMASSAYDWXMBRE5BSYEP1W11WBIF","3PJ71Z61R573YCGJZKTWVKPKWZJ194","323Q6SJS8JLN3XSA4VW9X3R2GM9HFA","3XCC1ODXDMGXJGWMEGJXN6XMAXGQRA","3DI28L7YXBJKT8707V9INYQVNWZ1EE","3X73LLYYQ2JZRP5R2JFM580BIDVHNH","3SBEHTYCWO8TZJKPF36IM0ZXMAEYIH","31EUONYN2W8MRB0N8NW3ZYRPG2BOVT","39RP059MEIYJIUH5QQQQ6I8DIAGBMV","3H8DHMCCWAGH73FMJA4GMV49WQXDKZ","3R2UR8A0IBLEV05I82XLNJOAWDJOXW","3KB8R4ZV1FCJQKLJFNSVTDOGMO4BGN","3A1PQ49WVIMWDIY2XWHO81N8FCR1HU","3L4PIM1GQUL6SIN85Q0R0S0O96XYRL","3N2BF7Y2VRZT97KRQI0MSTBBDNLHMH","33F859I567IXQGGUZTADED0H1OHBHM","3YDTZAI2WYL216A7IPX5ECE4A74147","39PAAFCODN52435V44I2T8XCFASVTM"]
 
 class TargetHit:
     def __init__(self, row):
@@ -42,13 +42,25 @@ class Trial:
         self.targetMissedCount = int(row[12])
 
 datadir = sys.argv[1]
+
+#load the approved assignments from mturk
+approvedAssignments = []
+mturkfiles = ["frameduration0.csv", "frameduration1000.csv"]
+for file in mturkfiles:
+    with open(os.path.join(os.path.join(datadir,"mturk_dowloaded_results"),file), 'rb') as csvfile:
+        csvreader = csv.reader(csvfile)
+        for lineNum, row in enumerate(csvreader):
+            if lineNum > 0:
+                assId = row[3]
+                approvedAssignments.append(assId)
+
 targetHitsByFrameDuration = collections.defaultdict(list)
 with open(datadir+"/targethits.csv", 'rb') as csvfile:
     csvreader = csv.reader(csvfile)
     for row in csvreader:
         hit = TargetHit(row)
 
-        if len(hit.assignmentId) > 4:
+        if hit.assignmentId in approvedAssignments:
             targetHitsByFrameDuration[hit.frameDuration].append(hit)
 
 trialsByFrameDuration = collections.defaultdict(list)
@@ -57,8 +69,8 @@ with open(datadir+"/trials.csv", 'rb') as csvfile:
     for row in csvreader:
         trial = Trial(row)
 
-        if len(hit.assignmentId) > 4:
-            trialsByFrameDuration[hit.frameDuration].append(trial)
+        if trial.assignmentId in approvedAssignments:
+            trialsByFrameDuration[trial.frameDuration].append(trial)
 
 print "loaded"
 
