@@ -73,53 +73,38 @@ with open(datadir+"/trials.csv", 'rb') as csvfile:
             trialsByFrameDuration[trial.frameDuration].append(trial)
 
 print "loaded"
-
-trialsByAssIdAndTrialId = collections.defaultdict(dict)
-for trial in trials:
-    trialsByAssIdAndTrialId[trial.assignmentId][trial.trialId] = trial
-
-hitsByAssId = collections.defaultdict(list)
-for hit in targethits:
-    hitsByAssId[hit.assignmentId].append(hit)
+#
+# trialsByFrameAndAssIdAndTrialId = collections.defaultdict(dict)
+# for trial in trialsByFrameDuration:
+#     trialsByFrameAndAssIdAndTrialId[frameDuration][trial.assignmentId][trial.trialId] = trial
+#
+# hitsByAssId = collections.defaultdict(list)
+# for hit in targethits:
+#     hitsByAssId[hit.assignmentId].append(hit)
 
 ## WSL's terrible take on analytics
-proxByTargetCount = {}
-for e in targethits:
-    idx = e.targetCount
-    try:
-        idx = trialsByAssIdAndTrialId[e.assignmentId][e.trialId].targetTotalCount
-    except:
-        print("broken")
-        continue
-    try:
-        proxByTargetCount[idx]
-    except KeyError:
-        proxByTargetCount[idx] = []
-    proxByTargetCount[idx].append(e.proximity)
+proxByTargetCount = collections.defaultdict(list)
+for frameDuration in targetHitsByFrameDuration:
+    for targetHit in targetHitsByFrameDuration[frameDuration]:
+        idx = targetHit.targetCount
+        # try:
+        #     idx = trialsByAssIdAndTrialId[e.assignmentId][e.trialId].targetTotalCount
+        # except:
+        #     print("broken")
+        #     continue
+    proxByTargetCount[idx].append(targetHit.proximity)
 
 
 ## Handle trial data ##
 
-proxByTrial = {}
-def addToByTrial( addVal ):
-    idx1 = e.targetTotalCount
-    try:
-        proxByTrial[idx1]
-    except KeyError:
-        proxByTrial[idx1] = {}
 
-    idx2 = e.targetSpeed
-    try:
-        proxByTrial[idx1][idx2]
-    except KeyError:
-        proxByTrial[idx1][idx2] = []
 
-    proxByTrial[idx1][idx2].append(addVal)
-
-for e in trials:
-    # Measure prox for completed trials
-    if e.targetHitCount == e.targetTotalCount:
-        addToByTrial(e.avgProximity)
+for frameDuration in trialsByFrameDuration:
+    print frameDuration
+    proxByTrial = collections.defaultdict(lambda :collections.defaultdict(list))
+    for trial in trialsByFrameDuration[frameDuration]:
+        #if trial.targetHitCount == trial.targetTotalCount:
+        proxByTrial[trial.targetTotalCount][trial.targetSpeed].append(trial.avgProximity)
 
     # Measure % completed trials
     #if e.targetHitCount == e.targetTotalCount:
@@ -129,40 +114,40 @@ for e in trials:
 
 ##############
 
-print "Tabulating..."
+    print "Tabulating..."
 
-for key in proxByTargetCount:
-    #print "%s -> %s" % (key, proxByTargetCount[key])
-    ttlProx = 0
-    for val in proxByTargetCount[key]:
-        ttlProx += val
-    print "AVERAGE PROX for %s targets = %f" % (key, ttlProx/len(proxByTargetCount[key]))
+    for key in proxByTargetCount:
+        #print "%s -> %s" % (key, proxByTargetCount[key])
+        ttlProx = 0
+        for val in proxByTargetCount[key]:
+            ttlProx += val
+        print "AVERAGE PROX for %s targets = %f" % (key, ttlProx/len(proxByTargetCount[key]))
 
-# First, print the header
-#print "Num Targets, Speed, Trial Duration"
-print '',
-for key1 in sorted(proxByTrial):
-    for key2 in sorted(proxByTrial[key1]):
-        print key2,
-    break  # WSL: a little hacky, but should work for most of the cases we need
-print ''
-
-# Now print the data
-for key1 in sorted(proxByTrial):
-    firstInRow = True
-    for key2 in sorted(proxByTrial[key1]):
-        ttlAvgProx = 0
-        for val in proxByTrial[key1][key2]:
-            ttlAvgProx += val
-            #print "avrgProx from trial with %s targets, speed %s, and duration %s (with %d datapoints) = %f" % (key1, key2, key3, len(proxByTrial[key1][key2][key3]), ttlAvgProx/len(proxByTrial[key1][key2][key3]))
-        if firstInRow:
-            print key1,
-            firstInRow = False
-        #print "%s,%s,%s,%f" % (key1, key2, key3, ttlAvgProx/len(proxByTrial[key1][key2][key3]))
-        #print "%s,%s,%f" % (key1, key2, ttlAvgProx/len(proxByTrial[key1][key2]))
-        print ttlAvgProx/len(proxByTrial[key1][key2]),
+    # First, print the header
+    #print "Num Targets, Speed, Trial Duration"
+    print '',
+    for key1 in sorted(proxByTrial):
+        for key2 in sorted(proxByTrial[key1]):
+            print key2,
+        break  # WSL: a little hacky, but should work for most of the cases we need
     print ''
 
+    # Now print the data
+    for key1 in sorted(proxByTrial):
+        firstInRow = True
+        for key2 in sorted(proxByTrial[key1]):
+            ttlAvgProx = 0
+            for val in proxByTrial[key1][key2]:
+                ttlAvgProx += val
+                #print "avrgProx from trial with %s targets, speed %s, and duration %s (with %d datapoints) = %f" % (key1, key2, key3, len(proxByTrial[key1][key2][key3]), ttlAvgProx/len(proxByTrial[key1][key2][key3]))
+            if firstInRow:
+                print key1,
+                firstInRow = False
+            #print "%s,%s,%s,%f" % (key1, key2, key3, ttlAvgProx/len(proxByTrial[key1][key2][key3]))
+            #print "%s,%s,%f" % (key1, key2, ttlAvgProx/len(proxByTrial[key1][key2]))
+            print ttlAvgProx/len(proxByTrial[key1][key2]),
+        print ''
 
-print "\nDone."
+
+    print "\nDone."
 
