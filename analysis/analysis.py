@@ -107,22 +107,18 @@ for frameDuration in trialsByFrameDuration:
     targetHitsByFrameDuration[frameDuration] = [hit for hit in targetHitsByFrameDuration[frameDuration] if hit.assignmentId not in assIdsToRemove]
 
 ## WSL's terrible take on analytics
-proxByTargetCount = collections.defaultdict(list)
-for frameDuration in targetHitsByFrameDuration:
-    for targetHit in targetHitsByFrameDuration[frameDuration]:
-        idx = targetHit.targetCount
-        # try:
-        #     idx = trialsByAssIdAndTrialId[e.assignmentId][e.trialId].targetTotalCount
-        # except:
-        #     print("broken")
-        #     continue
-    proxByTargetCount[idx].append(targetHit.proximity)
-
 
 ## Handle trial data ##
-
 for frameDuration in trialsByFrameDuration:
-    print frameDuration
+    print("analysing frameDuration: %s"%frameDuration)
+
+    proxByTotalTargets = collections.defaultdict(list)
+    for targetHit in targetHitsByFrameDuration[frameDuration]:
+        #get the trial this target was in
+        idx = trialByAssId[targetHit.assignmentId][targetHit.trialId].totalTargetCount
+        proxByTotalTargets[idx].append(targetHit.proximity)
+
+
     proxByTrial = collections.defaultdict(lambda :collections.defaultdict(list))
     for trial in trialsByFrameDuration[frameDuration]:
         #if trial.targetHitCount == trial.targetTotalCount:
@@ -138,12 +134,12 @@ for frameDuration in trialsByFrameDuration:
 
     print "Tabulating..."
 
-    for key in proxByTargetCount:
+    for key in proxByTotalTargets:
         #print "%s -> %s" % (key, proxByTargetCount[key])
         ttlProx = 0
-        for val in proxByTargetCount[key]:
+        for val in proxByTotalTargets[key]:
             ttlProx += val
-        print "AVERAGE PROX for %s targets = %f" % (key, ttlProx/len(proxByTargetCount[key]))
+        print "AVERAGE PROX for %s targets = %f" % (key, ttlProx/len(proxByTotalTargets[key]))
 
     # First, print the header
     #print "Num Targets, Speed, Trial Duration"
