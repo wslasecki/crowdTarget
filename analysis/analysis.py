@@ -73,14 +73,38 @@ with open(datadir+"/trials.csv", 'rb') as csvfile:
             trialsByFrameDuration[trial.frameDuration].append(trial)
 
 print "loaded"
-#
-# trialsByFrameAndAssIdAndTrialId = collections.defaultdict(dict)
-# for trial in trialsByFrameDuration:
-#     trialsByFrameAndAssIdAndTrialId[frameDuration][trial.assignmentId][trial.trialId] = trial
-#
-# hitsByAssId = collections.defaultdict(list)
-# for hit in targethits:
-#     hitsByAssId[hit.assignmentId].append(hit)
+
+#fix missing data
+#first stick the trials and hits into a map
+trialByAssId = collections.defaultdict(dict)
+hitByAssId = collections.defaultdict(lambda: collections.defaultdict(list))
+for frameDuration in trialsByFrameDuration:
+    assIdsToRemove = set()
+
+    for trial in trialsByFrameDuration[frameDuration]:
+        trialByAssId[trial.assignmentId][trial.trialId]=trial
+    for hit in targetHitsByFrameDuration[frameDuration]:
+        hitByAssId[hit.assignmentId][hit.trialId].append(hit)
+
+    #check if each trial has the correct number of hits
+    for assId in trialByAssId:
+        for trialId in trialByAssId[assId]:
+            trial = trialByAssId[assId][trialId]
+
+            if trial.targetHitCount != len(hitByAssId[assId][trialId]):
+                print("were missing hits, this cant be reconstructed")
+                assIdsToRemove.add(assId)
+    #check if the hit has a trial associated with it
+    for assId in hitByAssId:
+        for trialId in hitByAssId[assId]:
+            for hit in hitByAssId[assId][trialId]:
+                if trialId not in trialByAssId[assId]:
+                    print("were missing trial, maybe it can be reconstructed")
+                    assIdsToRemove.add(assId)
+
+    #remove corrupted trials and hits
+    trialsByFrameDuration[frameDuration] = [trial for trial in trialsByFrameDuration[frameDuration] if trial.assignmentId not in assIdsToRemove]
+    targetHitsByFrameDuration[frameDuration] = [hit for hit in targetHitsByFrameDuration[frameDuration] if hit.assignmentId not in assIdsToRemove]
 
 ## WSL's terrible take on analytics
 proxByTargetCount = collections.defaultdict(list)
@@ -96,8 +120,6 @@ for frameDuration in targetHitsByFrameDuration:
 
 
 ## Handle trial data ##
-
-
 
 for frameDuration in trialsByFrameDuration:
     print frameDuration
