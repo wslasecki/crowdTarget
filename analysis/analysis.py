@@ -115,7 +115,7 @@ for frameDuration in trialsByFrameDuration:
     proxByTotalTargets = collections.defaultdict(list)
     for targetHit in targetHitsByFrameDuration[frameDuration]:
         #get the trial this target was in
-        idx = trialByAssId[targetHit.assignmentId][targetHit.trialId].totalTargetCount
+        idx = trialByAssId[targetHit.assignmentId][targetHit.trialId].targetTotalCount
         proxByTotalTargets[idx].append(targetHit.proximity)
 
 
