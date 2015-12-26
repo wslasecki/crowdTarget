@@ -43,8 +43,10 @@ class Trial:
 
 datadir = sys.argv[1]
 
+
 #load the approved assignments from mturk
-approvedAssignments = []
+approvedAssignments = set()
+workerIdToFirstAssignmentId = {}
 mturkfiles = ["frameduration0.csv", "frameduration1000.csv"]
 for file in mturkfiles:
     with open(os.path.join(os.path.join(datadir,"mturk_dowloaded_results"),file), 'rb') as csvfile:
@@ -52,7 +54,13 @@ for file in mturkfiles:
         for lineNum, row in enumerate(csvreader):
             if lineNum > 0:
                 assId = row[3]
-                approvedAssignments.append(assId)
+                workerId = row[4]
+
+                #only approve the assignment if this is the workers first assignment, repeats not allowed
+                if workerId not in workerIdToFirstAssignmentId:
+                    workerIdToFirstAssignmentId[workerId] = assId
+                if assId == workerIdToFirstAssignmentId[workerId]:
+                    approvedAssignments.add(assId)
 
 targetHitsByFrameDuration = collections.defaultdict(list)
 with open(datadir+"/targethits.csv", 'rb') as csvfile:
