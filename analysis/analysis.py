@@ -216,9 +216,17 @@ titles = {0:"Live", 1000:"1s Still Frame", 2000:"2s Still Frame", 3000:"3s Still
 dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (trial.targetHitCount > 0, trial.avgProximity))
 plotHeatmap(titles, dataArrs, xTicks, yTicks)
 
+subDataArrs = {}
+for frameDuration in dataArrs.keys():
+    subDataArrs[frameDuration] = dataArrs[0] - dataArrs[frameDuration]
+plotHeatmap(titles, subDataArrs, xTicks, yTicks)
+
 #targets hit
 dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (True, (float(trial.targetHitCount) / float(trial.targetTotalCount))*100))
 plotHeatmap(titles, dataArrs, xTicks, yTicks)
+
+
+
 
 plt.show()
 print "\nDone."
