@@ -3,6 +3,9 @@ import json
 import sys
 import collections
 import os
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
 
 #to extract csvs from the databs
 #SELECT * FROM targethits INTO OUTFILE '/tmp/targethits.csv' FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n';
@@ -41,13 +44,72 @@ class Trial:
         self.targetHitCount = int(row[11])
         self.targetMissedCount = int(row[12])
 
+def constructDataArray(trialsByFrameDuration, calcFunc):
+    dataArrs = {}
+    numSamplesArrs = {}
+    xTicks = set()
+    yTicks = set()
+    for frameDuration in trialsByFrameDuration.keys():
+        dataDict = collections.defaultdict(lambda :collections.defaultdict(list))
+        for trial in trialsByFrameDuration[frameDuration]:
+            doIAdd, value = calcFunc(trial)
+            if doIAdd:
+                dataDict[trial.targetTotalCount][trial.targetSpeed].append(value)
+                xTicks.add(trial.targetSpeed)
+                yTicks.add(trial.targetTotalCount)
+
+        dataArr = np.zeros((6,6), dtype=np.float64)
+        numSamplesArr = np.zeros((6,6), dtype=np.float64)
+        for y, k1 in enumerate(sorted(dataDict)):
+            for x, k2 in enumerate(sorted(dataDict[k1])):
+                dataArr[y,x] = np.average(dataDict[k1][k2])
+                numSamplesArr[y,x] = len(dataDict[k1][k2])
+
+        dataArrs[frameDuration] = dataArr
+        numSamplesArrs[frameDuration] = numSamplesArr
+
+    return dataArrs, sorted(xTicks), sorted(yTicks), numSamplesArrs
+
+def plotHeatmap(titles, dataArrs, xLabels, yLabels):
+    #create the figure we're going to plot
+    fig, axes = plt.subplots(nrows=2, ncols=2)
+
+    vmin = sys.float_info.max
+    vmax = sys.float_info.min
+    for frameDuration in dataArrs.keys():
+        dataArr = dataArrs[frameDuration]
+        vmin = min(dataArr.min(), vmin)
+        vmax = max(dataArr.max(), vmax)
+
+
+    for i, frameDuration in enumerate(sorted(dataArrs.keys())):
+        dataArr = dataArrs[frameDuration]
+
+        # Now print the data
+        subfig = axes.flat[i]
+        subfig.set_title(titles[frameDuration])
+
+        heatmap = subfig.pcolor(dataArr, vmin=vmin, vmax=vmax)
+
+        for y in range(dataArr.shape[0]):
+            for x in range(dataArr.shape[1]):
+                subfig.text(x + 0.5, y + 0.5, '%.2f' % dataArr[y, x],
+                         horizontalalignment='center',
+                         verticalalignment='center',
+                         )
+
+        midTickLoc = [0.5,1.5,2.5,3.5,4.5,5.5]
+        subfig.set_xticks(midTickLoc)
+        subfig.set_yticks(midTickLoc)
+        subfig.set_xticklabels(xLabels)
+        subfig.set_yticklabels(yLabels)
+
+
 datadir = sys.argv[1]
-
-
 #load the approved assignments from mturk
 approvedAssignments = set()
 workerIdToFirstAssignmentId = {}
-mturkfiles = ["frameduration0.csv", "frameduration1000.csv"]
+mturkfiles = ["frameduration0.csv", "frameduration1000.csv", "frameduration2000.csv", "frameduration3000.csv"]
 for file in mturkfiles:
     with open(os.path.join(os.path.join(datadir,"mturk_dowloaded_results"),file), 'rb') as csvfile:
         csvreader = csv.reader(csvfile)
@@ -62,6 +124,7 @@ for file in mturkfiles:
                 if assId == workerIdToFirstAssignmentId[workerId]:
                     approvedAssignments.add(assId)
 
+#load in from the database trials and hits from approved assignments
 targetHitsByFrameDuration = collections.defaultdict(list)
 with open(datadir+"/targethits.csv", 'rb') as csvfile:
     csvreader = csv.reader(csvfile)
@@ -80,44 +143,59 @@ with open(datadir+"/trials.csv", 'rb') as csvfile:
         if trial.assignmentId in approvedAssignments:
             trialsByFrameDuration[trial.frameDuration].append(trial)
 
-print "loaded"
-
-#fix missing data
+#remove corrupted assignments (i.e., missing data)
 #first stick the trials and hits into a map
+frameDurationByAssId = {}
 trialByAssId = collections.defaultdict(dict)
 hitByAssId = collections.defaultdict(lambda: collections.defaultdict(list))
 for frameDuration in trialsByFrameDuration:
-    assIdsToRemove = set()
-
     for trial in trialsByFrameDuration[frameDuration]:
         trialByAssId[trial.assignmentId][trial.trialId]=trial
+        frameDurationByAssId[trial.assignmentId] = frameDuration
     for hit in targetHitsByFrameDuration[frameDuration]:
         hitByAssId[hit.assignmentId][hit.trialId].append(hit)
 
-    #check if each trial has the correct number of hits
-    for assId in trialByAssId:
-        for trialId in trialByAssId[assId]:
-            trial = trialByAssId[assId][trialId]
+assIdsToRemove = set()
+#check the assignment has the correct number of trials
+for assId in trialByAssId:
+    if len(trialByAssId[assId]) != 36:
+        assIdsToRemove.add(assId)
 
-            if trial.targetHitCount != len(hitByAssId[assId][trialId]):
-                print("were missing hits, this cant be reconstructed")
+#check if each trial has the correct number of hits
+for assId in trialByAssId:
+    for trialId in trialByAssId[assId]:
+        trial = trialByAssId[assId][trialId]
+
+        if trial.targetHitCount != len(hitByAssId[assId][trialId]):
+            # we're missing hits, this cant be reconstructed
+            assIdsToRemove.add(assId)
+#check if the hit has a trial associated with it
+for assId in hitByAssId:
+    for trialId in hitByAssId[assId]:
+        for hit in hitByAssId[assId][trialId]:
+            if trialId not in trialByAssId[assId]:
+                # we're missing trial, maybe it can be reconstructed
                 assIdsToRemove.add(assId)
-    #check if the hit has a trial associated with it
-    for assId in hitByAssId:
-        for trialId in hitByAssId[assId]:
-            for hit in hitByAssId[assId][trialId]:
-                if trialId not in trialByAssId[assId]:
-                    print("were missing trial, maybe it can be reconstructed")
-                    assIdsToRemove.add(assId)
 
-    #remove corrupted trials and hits
+#remove corrupted trials and hits
+for frameDuration in trialsByFrameDuration:
     trialsByFrameDuration[frameDuration] = [trial for trial in trialsByFrameDuration[frameDuration] if trial.assignmentId not in assIdsToRemove]
     targetHitsByFrameDuration[frameDuration] = [hit for hit in targetHitsByFrameDuration[frameDuration] if hit.assignmentId not in assIdsToRemove]
 
-## WSL's terrible take on analytics
+#count the assignments per frame duration
+print("Assignments per frame duration")
+for frameDuration in sorted(trialsByFrameDuration.keys()):
+    assIds = set()
+    for trial in trialsByFrameDuration[frameDuration]:
+        assIds.add(trial.assignmentId)
+    print("%d = %d"%(frameDuration, len(assIds)))
+
+
+
 
 ## Handle trial data ##
-for frameDuration in trialsByFrameDuration:
+dataArrs = {}
+for frameDuration in sorted(trialsByFrameDuration.keys()):
     print("analysing frameDuration: %s"%frameDuration)
 
     proxByTotalTargets = collections.defaultdict(list)
@@ -126,22 +204,6 @@ for frameDuration in trialsByFrameDuration:
         idx = trialByAssId[targetHit.assignmentId][targetHit.trialId].targetTotalCount
         proxByTotalTargets[idx].append(targetHit.proximity)
 
-
-    proxByTrial = collections.defaultdict(lambda :collections.defaultdict(list))
-    for trial in trialsByFrameDuration[frameDuration]:
-        #if trial.targetHitCount == trial.targetTotalCount:
-        proxByTrial[trial.targetTotalCount][trial.targetSpeed].append(trial.avgProximity)
-
-    # Measure % completed trials
-    #if e.targetHitCount == e.targetTotalCount:
-    #    addToByTrial(100.0)
-    #else:
-    #    addToByTrial(0.0)
-
-##############
-
-    print "Tabulating..."
-
     for key in proxByTotalTargets:
         #print "%s -> %s" % (key, proxByTargetCount[key])
         ttlProx = 0
@@ -149,31 +211,15 @@ for frameDuration in trialsByFrameDuration:
             ttlProx += val
         print "AVERAGE PROX for %s targets = %f" % (key, ttlProx/len(proxByTotalTargets[key]))
 
-    # First, print the header
-    #print "Num Targets, Speed, Trial Duration"
-    print '',
-    for key1 in sorted(proxByTrial):
-        for key2 in sorted(proxByTrial[key1]):
-            print key2,
-        break  # WSL: a little hacky, but should work for most of the cases we need
-    print ''
+# proximity
+titles = {0:"Live", 1000:"1s Still Frame", 2000:"2s Still Frame", 3000:"3s Still Frame"}
+dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (trial.targetHitCount > 0, trial.avgProximity))
+plotHeatmap(titles, dataArrs, xTicks, yTicks)
 
-    # Now print the data
-    for key1 in sorted(proxByTrial):
-        firstInRow = True
-        for key2 in sorted(proxByTrial[key1]):
-            ttlAvgProx = 0
-            for val in proxByTrial[key1][key2]:
-                ttlAvgProx += val
-                #print "avrgProx from trial with %s targets, speed %s, and duration %s (with %d datapoints) = %f" % (key1, key2, key3, len(proxByTrial[key1][key2][key3]), ttlAvgProx/len(proxByTrial[key1][key2][key3]))
-            if firstInRow:
-                print key1,
-                firstInRow = False
-            #print "%s,%s,%s,%f" % (key1, key2, key3, ttlAvgProx/len(proxByTrial[key1][key2][key3]))
-            #print "%s,%s,%f" % (key1, key2, ttlAvgProx/len(proxByTrial[key1][key2]))
-            print ttlAvgProx/len(proxByTrial[key1][key2]),
-        print ''
+#targets hit
+dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (True, (float(trial.targetHitCount) / float(trial.targetTotalCount))*100))
+plotHeatmap(titles, dataArrs, xTicks, yTicks)
 
-
-    print "\nDone."
+plt.show()
+print "\nDone."
 
