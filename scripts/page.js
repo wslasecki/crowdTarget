@@ -168,9 +168,10 @@ function stillFrameAnimation(newTarget, startLeft, startTop, endLeft, endTop, ti
 	var distance = Math.sqrt(deltaLeft*deltaLeft + deltaTop*deltaTop);
 
 	//move target backwards slightly so that it appears in the middle of zone
-	var backSpeed = (numFrames % 1) * Math.random();
-	var newLeft = parseFloat(newTarget.css("left")) - (leftInc * backSpeed);
-	var newTop = parseFloat(newTarget.css("top")) - (topInc * backSpeed);
+	var backSpeed = 1 - ((numFrames % 1) * Math.random());
+	//var backSpeed = (numFrames % 1) * Math.random();
+	var newLeft = startLeft - (leftInc * backSpeed);
+	var newTop = startTop - (topInc * backSpeed);
 	newTarget.css({
 		left: newLeft,
 		top: newTop,
