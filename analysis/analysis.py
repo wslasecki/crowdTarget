@@ -6,6 +6,7 @@ import os
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+from datetime import datetime
 
 #to extract csvs from the databs
 #SELECT * FROM targethits INTO OUTFILE '/tmp/targethits.csv' FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n';
@@ -106,23 +107,31 @@ def plotHeatmap(titles, dataArrs, xLabels, yLabels):
 
 
 datadir = sys.argv[1]
-#load the approved assignments from mturk
-approvedAssignments = set()
-workerIdToFirstAssignmentId = {}
-mturkfiles = ["frameduration0.csv", "frameduration1000.csv", "frameduration2000.csv", "frameduration3000.csv"]
-for file in mturkfiles:
+#load the assignments we have approved from mturk
+workerToDateToAssId = collections.defaultdict(dict)
+approvedmturkfiles = ["frameduration0.csv", "frameduration1000.csv", "frameduration2000.csv", "frameduration3000_REJECTED.csv", "frameduration3000.csv", "frameduration3000_2.csv"]
+for file in approvedmturkfiles:
     with open(os.path.join(os.path.join(datadir,"mturk_dowloaded_results"),file), 'rb') as csvfile:
         csvreader = csv.reader(csvfile)
         for lineNum, row in enumerate(csvreader):
             if lineNum > 0:
                 assId = row[3]
                 workerId = row[4]
+                acceptTime = datetime.strptime(row[6].replace(" PST",""), '%a %b %d %H:%M:%S %Y')
 
-                #only approve the assignment if this is the workers first assignment, repeats not allowed
-                if workerId not in workerIdToFirstAssignmentId:
-                    workerIdToFirstAssignmentId[workerId] = assId
-                if assId == workerIdToFirstAssignmentId[workerId]:
-                    approvedAssignments.add(assId)
+                #for each worker, store each time an assignment was accepted, and wether it was rejected or not
+                if "REJECTED" in file:
+                    workerToDateToAssId[workerId][acceptTime] = None
+                else:
+                    workerToDateToAssId[workerId][acceptTime] = assId
+
+#now for each worker, take the earliest assignment (i.e., their first attempt) discarding anything they did afterwards
+approvedAssignments = set()
+for workerId in workerToDateToAssId:
+    dates = sorted(workerToDateToAssId[workerId].keys())
+    firstAssignment = workerToDateToAssId[workerId][dates[0]]
+    if firstAssignment is not None:
+        approvedAssignments.add(firstAssignment)
 
 #load in from the database trials and hits from approved assignments
 targetHitsByFrameDuration = collections.defaultdict(list)
