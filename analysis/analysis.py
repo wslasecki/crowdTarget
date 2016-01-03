@@ -107,8 +107,13 @@ def plotHeatmap(titles, dataArrs, xLabels, yLabels):
 
 
 datadir = sys.argv[1]
+#keep a log of why assingments were rejected
+whyWasAssIdRejected = {}
+assIdToFrameDuration = {}
+
 #load the assignments we have approved from mturk
 workerToDateToAssId = collections.defaultdict(dict)
+buggedAssIds = set()
 approvedmturkfiles = [f for f in os.listdir(os.path.join(datadir,"mturk_dowloaded_results")) if os.path.isfile(os.path.join(os.path.join(datadir,"mturk_dowloaded_results"), f))]
 for file in approvedmturkfiles:
     with open(os.path.join(os.path.join(datadir,"mturk_dowloaded_results"),file), 'rb') as csvfile:
@@ -121,17 +126,29 @@ for file in approvedmturkfiles:
 
                 #for each worker, store each time an assignment was accepted, and wether it was rejected or not
                 if "REJECTED" in file:
-                    workerToDateToAssId[workerId][acceptTime] = None
-                else:
-                    workerToDateToAssId[workerId][acceptTime] = assId
+                    buggedAssIds.add(assId)
+
+                workerToDateToAssId[workerId][acceptTime] = assId
+
 
 #now for each worker, take the earliest assignment (i.e., their first attempt) discarding anything they did afterwards
 approvedAssignments = set()
 for workerId in workerToDateToAssId:
     dates = sorted(workerToDateToAssId[workerId].keys())
     firstAssignment = workerToDateToAssId[workerId][dates[0]]
-    if firstAssignment is not None:
+    if firstAssignment not in buggedAssIds:
         approvedAssignments.add(firstAssignment)
+    else:
+        #log why we rejected this assignment
+        whyWasAssIdRejected[firstAssignment] = "Experiment Was Bugged"
+
+    #for the other dates, log why this assignment was rejected
+    for otherDate in dates[1:]:
+        otherAssId = workerToDateToAssId[workerId][otherDate]
+        if otherAssId not in buggedAssIds:
+            whyWasAssIdRejected[otherAssId] = "Worker Had Already Performed Experiment"
+        else:
+            whyWasAssIdRejected[otherAssId] = "Experiment Was Bugged, But Rejected As Worker Had Already Performed Experiment"
 
 #load in from the database trials and hits from approved assignments
 targetHitsByFrameDuration = collections.defaultdict(list)
@@ -149,18 +166,18 @@ with open(datadir+"/trials.csv", 'rb') as csvfile:
     for row in csvreader:
         trial = Trial(row)
 
+        assIdToFrameDuration[trial.assignmentId] = trial.frameDuration
+
         if trial.assignmentId in approvedAssignments:
             trialsByFrameDuration[trial.frameDuration].append(trial)
 
 #remove corrupted assignments (i.e., missing data)
 #first stick the trials and hits into a map
-frameDurationByAssId = {}
 trialByAssId = collections.defaultdict(dict)
 hitByAssId = collections.defaultdict(lambda: collections.defaultdict(list))
 for frameDuration in trialsByFrameDuration:
     for trial in trialsByFrameDuration[frameDuration]:
         trialByAssId[trial.assignmentId][trial.trialId]=trial
-        frameDurationByAssId[trial.assignmentId] = frameDuration
     for hit in targetHitsByFrameDuration[frameDuration]:
         hitByAssId[hit.assignmentId][hit.trialId].append(hit)
 
@@ -169,22 +186,32 @@ assIdsToRemove = set()
 for assId in trialByAssId:
     if len(trialByAssId[assId]) != 36:
         assIdsToRemove.add(assId)
+        whyWasAssIdRejected[assId] = "Missing Trials"
 
 #check if each trial has the correct number of hits
 for assId in trialByAssId:
+    if assId in assIdsToRemove:
+        continue
+
     for trialId in trialByAssId[assId]:
         trial = trialByAssId[assId][trialId]
 
         if trial.targetHitCount != len(hitByAssId[assId][trialId]):
             # we're missing hits, this cant be reconstructed
             assIdsToRemove.add(assId)
+            whyWasAssIdRejected[assId] = "Missing Target Hits"
+
 #check if the hit has a trial associated with it
 for assId in hitByAssId:
+    if assId in assIdsToRemove:
+        continue
+
     for trialId in hitByAssId[assId]:
         for hit in hitByAssId[assId][trialId]:
             if trialId not in trialByAssId[assId]:
                 # we're missing trial, maybe it can be reconstructed
                 assIdsToRemove.add(assId)
+                whyWasAssIdRejected[assId] = "Had Target Hit, But No Associated Trial"
 
 #remove corrupted trials and hits
 for frameDuration in trialsByFrameDuration:
@@ -199,8 +226,11 @@ for frameDuration in sorted(trialsByFrameDuration.keys()):
         assIds.add(trial.assignmentId)
     print("%d = %d"%(frameDuration, len(assIds)))
 
-
-
+#count why we rejected assignments
+rejectionsByFrameDuration = collections.defaultdict(lambda: collections.defaultdict(lambda: 0))
+for assId in whyWasAssIdRejected:
+    frameDuration = assIdToFrameDuration[assId]
+    rejectionsByFrameDuration[frameDuration][whyWasAssIdRejected[assId]] += 1
 
 ## Handle trial data ##
 dataArrs = {}
