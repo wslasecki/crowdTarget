@@ -55,7 +55,10 @@ def constructDataArray(trialsByFrameDuration, calcFunc):
         for trial in trialsByFrameDuration[frameDuration]:
             doIAdd, value = calcFunc(trial)
             if doIAdd:
-                dataDict[trial.targetTotalCount][trial.targetSpeed].append(value)
+                if type(value) is list:
+                    dataDict[trial.targetTotalCount][trial.targetSpeed].extend(value)
+                else:
+                    dataDict[trial.targetTotalCount][trial.targetSpeed].append(value)
                 xTicks.add(trial.targetSpeed)
                 yTicks.add(trial.targetTotalCount)
 
@@ -71,9 +74,10 @@ def constructDataArray(trialsByFrameDuration, calcFunc):
 
     return dataArrs, sorted(xTicks), sorted(yTicks), numSamplesArrs
 
-def plotHeatmap(titles, dataArrs, xLabels, yLabels):
+def plotHeatmap(titles, dataArrs, xLabels, yLabels, title):
     #create the figure we're going to plot
     fig, axes = plt.subplots(nrows=2, ncols=2)
+    fig.suptitle(title, fontsize=14, fontweight='bold')
 
     vmin = sys.float_info.max
     vmax = sys.float_info.min
@@ -212,6 +216,17 @@ for assId in hitByAssId:
                 # we're missing trial, maybe it can be reconstructed
                 assIdsToRemove.add(assId)
                 whyWasAssIdRejected[assId] = "Had Target Hit, But No Associated Trial"
+#check that the hit data looks valid
+for assId in hitByAssId:
+    if assId in assIdsToRemove:
+        continue
+
+    for trialId in hitByAssId[assId]:
+        for hit in hitByAssId[assId][trialId]:
+            if hit.proximity > 35.35533905932738:
+                # proximity is greater than what is possible
+                assIdsToRemove.add(assId)
+                whyWasAssIdRejected[assId] = "Hit Had Bad Data (Proximity Too High)"
 
 #remove corrupted trials and hits
 for frameDuration in trialsByFrameDuration:
@@ -252,19 +267,23 @@ for frameDuration in sorted(trialsByFrameDuration.keys()):
 
 # proximity
 titles = {0:"Live", 1000:"1s Still Frame", 2000:"2s Still Frame", 3000:"3s Still Frame"}
-dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (trial.targetHitCount > 0, trial.avgProximity))
-plotHeatmap(titles, dataArrs, xTicks, yTicks)
+dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (trial.targetHitCount > 0, [hit.proximity for hit in hitByAssId[trial.assignmentId][trial.trialId]]))
+plotHeatmap(titles, dataArrs, xTicks, yTicks,"Avg Proximity")
 
 subDataArrs = {}
 for frameDuration in dataArrs.keys():
     subDataArrs[frameDuration] = dataArrs[0] - dataArrs[frameDuration]
-plotHeatmap(titles, subDataArrs, xTicks, yTicks)
+plotHeatmap(titles, subDataArrs, xTicks, yTicks, "Diff Avg Proximity with Live")
 
 #targets hit
 dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (True, (float(trial.targetHitCount) / float(trial.targetTotalCount))*100))
-plotHeatmap(titles, dataArrs, xTicks, yTicks)
+plotHeatmap(titles, dataArrs, xTicks, yTicks, "Percentage Targets Hit")
 
+dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (True, trial.misclicks))
+plotHeatmap(titles, dataArrs, xTicks, yTicks, "Number of Misclicks")
 
+dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (True, trial.trialDuration))
+plotHeatmap(titles, dataArrs, xTicks, yTicks, "Trial Duration")
 
 
 plt.show()
