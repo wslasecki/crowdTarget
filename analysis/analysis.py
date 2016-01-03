@@ -217,16 +217,16 @@ for assId in hitByAssId:
                 assIdsToRemove.add(assId)
                 whyWasAssIdRejected[assId] = "Had Target Hit, But No Associated Trial"
 #check that the hit data looks valid
-for assId in hitByAssId:
-    if assId in assIdsToRemove:
-        continue
-
-    for trialId in hitByAssId[assId]:
-        for hit in hitByAssId[assId][trialId]:
-            if hit.proximity > 35.35533905932738:
-                # proximity is greater than what is possible
-                assIdsToRemove.add(assId)
-                whyWasAssIdRejected[assId] = "Hit Had Bad Data (Proximity Too High)"
+# for assId in hitByAssId:
+#     if assId in assIdsToRemove:
+#         continue
+#
+#     for trialId in hitByAssId[assId]:
+#         for hit in hitByAssId[assId][trialId]:
+#             if hit.proximity > 35.35533905932738:
+#                 # proximity is greater than what is possible
+#                 assIdsToRemove.add(assId)
+#                 whyWasAssIdRejected[assId] = "Hit Had Bad Data (Proximity Too High)"
 
 #remove corrupted trials and hits
 for frameDuration in trialsByFrameDuration:
@@ -274,7 +274,7 @@ for frameDuration in sorted(trialsByFrameDuration.keys()):
 
 # proximity
 titles = {0:"Live", 1000:"1s Still Frame", 2000:"2s Still Frame", 3000:"3s Still Frame"}
-dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (trial.targetHitCount > 0, [hit.proximity for hit in hitByAssId[trial.assignmentId][trial.trialId]]))
+dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (trial.targetHitCount > 0, [hit.proximity for hit in hitByAssId[trial.assignmentId][trial.trialId] if hit.proximity <= 25]))
 plotHeatmap(titles, dataArrs, xTicks, yTicks,"Avg Proximity")
 
 subDataArrs = {}
