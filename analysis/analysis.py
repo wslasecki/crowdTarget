@@ -109,7 +109,7 @@ def plotHeatmap(titles, dataArrs, xLabels, yLabels):
 datadir = sys.argv[1]
 #load the assignments we have approved from mturk
 workerToDateToAssId = collections.defaultdict(dict)
-approvedmturkfiles = ["frameduration0.csv", "frameduration1000.csv", "frameduration2000.csv", "frameduration3000_REJECTED.csv", "frameduration3000.csv", "frameduration3000_2.csv"]
+approvedmturkfiles = [f for f in os.listdir(os.path.join(datadir,"mturk_dowloaded_results")) if os.path.isfile(os.path.join(os.path.join(datadir,"mturk_dowloaded_results"), f))]
 for file in approvedmturkfiles:
     with open(os.path.join(os.path.join(datadir,"mturk_dowloaded_results"),file), 'rb') as csvfile:
         csvreader = csv.reader(csvfile)
