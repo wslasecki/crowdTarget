@@ -6,6 +6,7 @@ var animationFunction=stillFrameAnimation;
 if (stillFrameDuration == 0) {
 	animationFunction=videoAnimation;
 }
+var backSpeedRandom = Math.random();
 
 //initialize logging vars
 var workerId = gup("workerId");
@@ -45,6 +46,9 @@ function startTargets() {
 		currentRound++;
 		currentSpeed = roundParams.speed;
 		currentNumTargets = roundParams.numTargets;
+
+		//re-randomize how far back targets are spawned in still frame interface
+		backSpeedRandom = Math.random();
 
 		//clear logging variables
 		startTime = (new Date).getTime();
@@ -168,7 +172,7 @@ function stillFrameAnimation(newTarget, startLeft, startTop, endLeft, endTop, ti
 	var distance = Math.sqrt(deltaLeft*deltaLeft + deltaTop*deltaTop);
 
 	//move target backwards slightly so that it appears in the middle of zone
-	var backSpeed = 1 - ((numFrames % 1) * Math.random());
+	var backSpeed = 1 - ((numFrames % 1) * backSpeedRandom);
 	var newLeft = startLeft - (leftInc * backSpeed);
 	var newTop = startTop - (topInc * backSpeed);
 	newTarget.css({
