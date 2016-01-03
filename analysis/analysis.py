@@ -265,6 +265,13 @@ for frameDuration in sorted(trialsByFrameDuration.keys()):
             ttlProx += val
         print "AVERAGE PROX for %s targets = %f" % (key, ttlProx/len(proxByTotalTargets[key]))
 
+
+#We now generate graphs based on this data
+#To do that we use the function constructDataArray
+#the 2nd parameter of constructDataArray is a function that returns a tuple (BOOL, value/[values])
+#the tuple contains a boolean wether the data for this trial should be used (i.e., only calculating proximity when the worker has actually clicked on atleast 1 hit) (not actually sure if this is needed anymore)
+#the tuple contains a single value, or a list of values, that will then be averaged by the constructDataArray function
+
 # proximity
 titles = {0:"Live", 1000:"1s Still Frame", 2000:"2s Still Frame", 3000:"3s Still Frame"}
 dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (trial.targetHitCount > 0, [hit.proximity for hit in hitByAssId[trial.assignmentId][trial.trialId]]))
