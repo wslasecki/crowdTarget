@@ -109,6 +109,9 @@ def plotHeatmap(titles, dataArrs, xLabels, yLabels, title):
         subfig.set_xticklabels(xLabels)
         subfig.set_yticklabels(yLabels)
 
+    fig.text(0.5, 0.04, 'Speed of Targets in Pixels per Second', ha='center')
+    fig.text(0.04, 0.5, 'Number of Simultaneous Targets', va='center', rotation='vertical')
+
 
 datadir = sys.argv[1]
 #keep a log of why assingments were rejected
