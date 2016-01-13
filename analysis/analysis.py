@@ -289,10 +289,10 @@ plotHeatmap(titles, subDataArrs, xTicks, yTicks, "Diff Avg Proximity with Live")
 dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (True, (float(trial.targetHitCount) / float(trial.targetTotalCount))*100))
 plotHeatmap(titles, dataArrs, xTicks, yTicks, "Percentage Targets Hit")
 
-dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (True, trial.misclicks))
+dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (True, trial.misclicks/(trial.targetHitCount+trial.misclicks)) if trial.targetHitCount+trial.misclicks > 0 else (False, 0))
 plotHeatmap(titles, dataArrs, xTicks, yTicks, "Number of Misclicks")
 
-dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (True, trial.trialDuration))
+dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (True, trial.trialDuration/((500/float(trial.targetSpeed))*1000)))
 plotHeatmap(titles, dataArrs, xTicks, yTicks, "Trial Duration")
 
 
