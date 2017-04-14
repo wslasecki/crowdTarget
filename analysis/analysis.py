@@ -74,7 +74,7 @@ def constructDataArray(trialsByFrameDuration, calcFunc):
 
     return dataArrs, sorted(xTicks), sorted(yTicks), numSamplesArrs
 
-def plotHeatmap(titles, dataArrs, xLabels, yLabels, title):
+def plotHeatmap(titles, dataArrs, xLabels, yLabels, title, textformat="%.2f"):
     #create the figure we're going to plot
     fig, axes = plt.subplots(nrows=2, ncols=2)
     fig.suptitle(title, fontsize=14, fontweight='bold')
@@ -98,7 +98,7 @@ def plotHeatmap(titles, dataArrs, xLabels, yLabels, title):
 
         for y in range(dataArr.shape[0]):
             for x in range(dataArr.shape[1]):
-                subfig.text(x + 0.5, y + 0.5, '%.2f' % dataArr[y, x],
+                subfig.text(x + 0.5, y + 0.5, textformat % dataArr[y, x],
                          horizontalalignment='center',
                          verticalalignment='center',
                          )
@@ -111,6 +111,7 @@ def plotHeatmap(titles, dataArrs, xLabels, yLabels, title):
 
     fig.text(0.5, 0.04, 'Speed of Targets in Pixels per Second', ha='center')
     fig.text(0.04, 0.5, 'Number of Simultaneous Targets', va='center', rotation='vertical')
+    plt.savefig("{}.pdf".format(title).replace(" ", "_"))
 
 
 datadir = sys.argv[1]
@@ -123,7 +124,7 @@ workerToDateToAssId = collections.defaultdict(dict)
 buggedAssIds = set()
 approvedmturkfiles = [f for f in os.listdir(os.path.join(datadir,"mturk_dowloaded_results")) if os.path.isfile(os.path.join(os.path.join(datadir,"mturk_dowloaded_results"), f))]
 for file in approvedmturkfiles:
-    with open(os.path.join(os.path.join(datadir,"mturk_dowloaded_results"),file), 'rb') as csvfile:
+    with open(os.path.join(os.path.join(datadir,"mturk_dowloaded_results"),file), 'r') as csvfile:
         csvreader = csv.reader(csvfile)
         for lineNum, row in enumerate(csvreader):
             if lineNum > 0:
@@ -159,7 +160,7 @@ for workerId in workerToDateToAssId:
 
 #load in from the database trials and hits from approved assignments
 targetHitsByFrameDuration = collections.defaultdict(list)
-with open(datadir+"/targethits.csv", 'rb') as csvfile:
+with open(datadir+"/targethits.csv", 'r') as csvfile:
     csvreader = csv.reader(csvfile)
     for row in csvreader:
         hit = TargetHit(row)
@@ -168,7 +169,7 @@ with open(datadir+"/targethits.csv", 'rb') as csvfile:
             targetHitsByFrameDuration[hit.frameDuration].append(hit)
 
 trialsByFrameDuration = collections.defaultdict(list)
-with open(datadir+"/trials.csv", 'rb') as csvfile:
+with open(datadir+"/trials.csv", 'r') as csvfile:
     csvreader = csv.reader(csvfile)
     for row in csvreader:
         trial = Trial(row)
@@ -266,7 +267,7 @@ for frameDuration in sorted(trialsByFrameDuration.keys()):
         ttlProx = 0
         for val in proxByTotalTargets[key]:
             ttlProx += val
-        print "AVERAGE PROX for %s targets = %f" % (key, ttlProx/len(proxByTotalTargets[key]))
+        print("AVERAGE PROX for %s targets = %f" % (key, ttlProx/len(proxByTotalTargets[key])))
 
 
 #We now generate graphs based on this data
@@ -277,8 +278,8 @@ for frameDuration in sorted(trialsByFrameDuration.keys()):
 
 # proximity
 titles = {0:"Live", 1000:"1s Still Frame", 2000:"2s Still Frame", 3000:"3s Still Frame"}
-dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (trial.targetHitCount > 0, [hit.proximity for hit in hitByAssId[trial.assignmentId][trial.trialId] if hit.proximity <= 25]))
-plotHeatmap(titles, dataArrs, xTicks, yTicks,"Avg Proximity")
+dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (trial.targetHitCount > 0, [(1.0-(hit.proximity/25.0))*100 for hit in hitByAssId[trial.assignmentId][trial.trialId] if hit.proximity <= 25]))
+plotHeatmap(titles, dataArrs, xTicks, yTicks,"Avg Proximity", textformat="%d")
 
 subDataArrs = {}
 for frameDuration in dataArrs.keys():
@@ -287,15 +288,15 @@ plotHeatmap(titles, subDataArrs, xTicks, yTicks, "Diff Avg Proximity with Live")
 
 #targets hit
 dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (True, (float(trial.targetHitCount) / float(trial.targetTotalCount))*100))
-plotHeatmap(titles, dataArrs, xTicks, yTicks, "Percentage Targets Hit")
+plotHeatmap(titles, dataArrs, xTicks, yTicks, "Percentage Targets Hit", textformat="%d")
 
-dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (True, trial.misclicks/(trial.targetHitCount+trial.misclicks)) if trial.targetHitCount+trial.misclicks > 0 else (False, 0))
-plotHeatmap(titles, dataArrs, xTicks, yTicks, "Number of Misclicks")
+dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (True, (trial.misclicks/(trial.targetHitCount+trial.misclicks))*100) if trial.targetHitCount+trial.misclicks > 0 else (False, 0))
+plotHeatmap(titles, dataArrs, xTicks, yTicks, "Percentage of Misclicks", textformat="%d")
 
 dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (True, trial.trialDuration/((500/float(trial.targetSpeed))*1000)))
 plotHeatmap(titles, dataArrs, xTicks, yTicks, "Trial Duration")
 
 
 plt.show()
-print "\nDone."
+print("\nDone.")
 
