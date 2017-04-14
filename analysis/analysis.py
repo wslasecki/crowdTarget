@@ -4,6 +4,7 @@ import sys
 import collections
 import os
 import matplotlib as mpl
+mpl.rcParams['pdf.fonttype'] = 42
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
@@ -66,7 +67,10 @@ def constructDataArray(trialsByFrameDuration, calcFunc):
         numSamplesArr = np.zeros((6,6), dtype=np.float64)
         for y, k1 in enumerate(sorted(dataDict)):
             for x, k2 in enumerate(sorted(dataDict[k1])):
-                dataArr[y,x] = np.average(dataDict[k1][k2])
+                if len(dataDict[k1][k2]) > 0:
+                    dataArr[y,x] = np.average(dataDict[k1][k2])
+                else:
+                    dataArr[y,x] = 0
                 numSamplesArr[y,x] = len(dataDict[k1][k2])
 
         dataArrs[frameDuration] = dataArr
@@ -111,67 +115,69 @@ def plotHeatmap(titles, dataArrs, xLabels, yLabels, title, textformat="%.2f"):
 
     fig.text(0.5, 0.04, 'Speed of Targets in Pixels per Second', ha='center')
     fig.text(0.04, 0.5, 'Number of Simultaneous Targets', va='center', rotation='vertical')
+
+    fig.set_size_inches(10, 10)
     plt.savefig("{}.pdf".format(title).replace(" ", "_"))
 
 def aggregateTargetHits(targetHitsByFrameDuration, trialByAssId, trialsByFrameDuration):
-	#create a data structure to store similar target hits
-	targetHitsByFrameSpeedTrialCount = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(list))))
-	for frameDuration in targetHitsByFrameDuration:
-		for hit in targetHitsByFrameDuration[frameDuration]:
-			targetTotalCount = trialByAssId[hit.assignmentId][hit.trialId].targetTotalCount
-			targetHitsByFrameSpeedTrialCount[hit.frameDuration][hit.targetSpeed][targetTotalCount][hit.targetCount].append(hit)
+    #create a data structure to store similar target hits
+    targetHitsByFrameSpeedTrialCount = collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(list))))
+    for frameDuration in targetHitsByFrameDuration:
+        for hit in targetHitsByFrameDuration[frameDuration]:
+            targetTotalCount = trialByAssId[hit.assignmentId][hit.trialId].targetTotalCount
+            targetHitsByFrameSpeedTrialCount[hit.frameDuration][hit.targetSpeed][targetTotalCount][hit.targetCount].append(hit)
 
-	#rotate all hits so theyre the same
-	proxByFrameCountSpeed = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
-	for frameDuration in targetHitsByFrameSpeedTrialCount:
-		for targetSpeed in targetHitsByFrameSpeedTrialCount[frameDuration]:
-			for targetTotal in targetHitsByFrameSpeedTrialCount[frameDuration][targetSpeed]:
-				for targetCount in targetHitsByFrameSpeedTrialCount[frameDuration][targetSpeed][targetTotal]:
-					allHits = targetHitsByFrameSpeedTrialCount[frameDuration][targetSpeed][targetTotal][targetCount]
+    #rotate all hits so theyre the same
+    proxByFrameCountSpeed = collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(list)))
+    for frameDuration in targetHitsByFrameSpeedTrialCount:
+        for targetSpeed in targetHitsByFrameSpeedTrialCount[frameDuration]:
+            for targetTotal in targetHitsByFrameSpeedTrialCount[frameDuration][targetSpeed]:
+                for targetCount in targetHitsByFrameSpeedTrialCount[frameDuration][targetSpeed][targetTotal]:
+                    allHits = targetHitsByFrameSpeedTrialCount[frameDuration][targetSpeed][targetTotal][targetCount]
 
-					mouseDeltas = []
-					for hit in allHits:
-						centerPos = np.array(hit.endTargetPos) + [25,25]
-						mouseDelta = np.array(hit.mousePath, dtype=np.float64)[-1,0:2] - centerPos
-						prox = np.linalg.norm(mouseDelta)
-						if prox <= 25:
-							mouseDeltas.append(mouseDelta)
-						# npStartPos = np.array(hit.startTargetPos) + [25,25]
-						# npEndPos = np.array(hit.endTargetPos) + [25,25]
-						# hitDelta = npEndPos - npStartPos
-						#
-						# distanceTravelled = np.linalg.norm(hitDelta)
-						# dotProduct = np.dot(hitDelta, [1,0])
-						# theta = -(np.arccos(dotProduct / distanceTravelled))
-						#
-						# rotMatrix = np.array([[np.cos(theta), -np.sin(theta)],
-						# 					  [np.sin(theta),  np.cos(theta)]])
-						#
-						# rotatedDelta = rotMatrix.dot(hitDelta)
-						# npMousePath = np.array(hit.mousePath, dtype=np.float64)[:,0:2]
-						# for i in range(len(npMousePath)):
-						# 	npMousePath[i,:] = rotMatrix.dot(npMousePath[i,:] - npStartPos)
-						#
-						# #calculate mouse proximity
-						# centerPos = rotatedDelta
-						# mouseDelta = npMousePath[-1,:] - centerPos
-						# prox = np.linalg.norm(mouseDelta)
-						# if prox <= 25:
-						# 	mouseDeltas.append(mouseDelta)
+                    mouseDeltas = []
+                    for hit in allHits:
+                        centerPos = np.array(hit.endTargetPos) + [25,25]
+                        mouseDelta = np.array(hit.mousePath, dtype=np.float64)[-1,0:2] - centerPos
+                        prox = np.linalg.norm(mouseDelta)
+                        if prox <= 25:
+                            mouseDeltas.append(mouseDelta)
+                        # npStartPos = np.array(hit.startTargetPos) + [25,25]
+                        # npEndPos = np.array(hit.endTargetPos) + [25,25]
+                        # hitDelta = npEndPos - npStartPos
+                        #
+                        # distanceTravelled = np.linalg.norm(hitDelta)
+                        # dotProduct = np.dot(hitDelta, [1,0])
+                        # theta = -(np.arccos(dotProduct / distanceTravelled))
+                        #
+                        # rotMatrix = np.array([[np.cos(theta), -np.sin(theta)],
+                        # 					  [np.sin(theta),  np.cos(theta)]])
+                        #
+                        # rotatedDelta = rotMatrix.dot(hitDelta)
+                        # npMousePath = np.array(hit.mousePath, dtype=np.float64)[:,0:2]
+                        # for i in range(len(npMousePath)):
+                        # 	npMousePath[i,:] = rotMatrix.dot(npMousePath[i,:] - npStartPos)
+                        #
+                        # #calculate mouse proximity
+                        # centerPos = rotatedDelta
+                        # mouseDelta = npMousePath[-1,:] - centerPos
+                        # prox = np.linalg.norm(mouseDelta)
+                        # if prox <= 25:
+                        # 	mouseDeltas.append(mouseDelta)
 
-					if len(mouseDeltas) > 3:
-						avgMousePos = np.array(mouseDeltas).mean(axis=0)
-						avgProx = np.linalg.norm(avgMousePos)
-						proxByFrameCountSpeed[frameDuration][targetTotal][targetSpeed].extend(mouseDeltas)
-					#print("FD:%d SPD:%d %d/%d Prox: %f"%(frameDuration,targetSpeed,targetCount,targetTotal,avgProx))
+                    if len(mouseDeltas) > 3:
+                        avgMousePos = np.array(mouseDeltas).mean(axis=0)
+                        avgProx = np.linalg.norm(avgMousePos)
+                        proxByFrameCountSpeed[frameDuration][targetTotal][targetSpeed].extend(mouseDeltas)
+                    #print("FD:%d SPD:%d %d/%d Prox: %f"%(frameDuration,targetSpeed,targetCount,targetTotal,avgProx))
 
-	canBeUsed = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: True)))
-	def getAvgProx(trial):
-		useThisValue = canBeUsed[trial.frameDuration][trial.targetTotalCount][trial.targetSpeed]
-		canBeUsed[trial.frameDuration][trial.targetTotalCount][trial.targetSpeed] = False
-		proxValues = proxByFrameCountSpeed[trial.frameDuration][trial.targetTotalCount][trial.targetSpeed]
-		return (useThisValue, proxValues)
-	return constructDataArray(trialsByFrameDuration, getAvgProx)
+    canBeUsed = collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(lambda: True)))
+    def getAvgProx(trial):
+        useThisValue = canBeUsed[trial.frameDuration][trial.targetTotalCount][trial.targetSpeed]
+        canBeUsed[trial.frameDuration][trial.targetTotalCount][trial.targetSpeed] = False
+        proxValues = proxByFrameCountSpeed[trial.frameDuration][trial.targetTotalCount][trial.targetSpeed]
+        return (useThisValue, proxValues)
+    return constructDataArray(trialsByFrameDuration, getAvgProx)
 
 datadir = sys.argv[1]
 #keep a log of why assingments were rejected
@@ -181,9 +187,10 @@ assIdToFrameDuration = {}
 #load the assignments we have approved from mturk
 workerToDateToAssId = collections.defaultdict(dict)
 buggedAssIds = set()
-approvedmturkfiles = [f for f in os.listdir(os.path.join(datadir,"mturk_dowloaded_results")) if os.path.isfile(os.path.join(os.path.join(datadir,"mturk_dowloaded_results"), f))]
+mturk_dir = os.path.join(datadir,"mturk_dowloaded_results")
+approvedmturkfiles = [f for f in os.listdir(mturk_dir) if os.path.isfile(os.path.join(mturk_dir, f))]
 for file in approvedmturkfiles:
-    with open(os.path.join(os.path.join(datadir,"mturk_dowloaded_results"),file), 'r') as csvfile:
+    with open(os.path.join(mturk_dir,file), 'r') as csvfile:
         csvreader = csv.reader(csvfile)
         for lineNum, row in enumerate(csvreader):
             if lineNum > 0:
@@ -237,6 +244,7 @@ with open(datadir+"/trials.csv", 'r') as csvfile:
 
         if trial.assignmentId in approvedAssignments:
             trialsByFrameDuration[trial.frameDuration].append(trial)
+
 
 #remove corrupted assignments (i.e., missing data)
 #first stick the trials and hits into a map
@@ -338,25 +346,28 @@ for frameDuration in sorted(trialsByFrameDuration.keys()):
 # proximity
 titles = {0:"Live", 1000:"1s Still Frame", 2000:"2s Still Frame", 3000:"3s Still Frame"}
 dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (trial.targetHitCount > 0, [(1.0-(hit.proximity/25.0))*100 for hit in hitByAssId[trial.assignmentId][trial.trialId] if hit.proximity <= 25]))
-plotHeatmap(titles, dataArrs, xTicks, yTicks,"Avg Proximity", textformat="%d")
+plotHeatmap(titles, dataArrs, xTicks, yTicks,"Percentage Proximity to Target Center", textformat="%d")
 
 subDataArrs = {}
 for frameDuration in dataArrs.keys():
-    subDataArrs[frameDuration] = dataArrs[0] - dataArrs[frameDuration]
+    subDataArrs[frameDuration] = dataArrs[frameDuration] - dataArrs[0]
 plotHeatmap(titles, subDataArrs, xTicks, yTicks, "Diff Avg Proximity with Live")
 
 #targets hit
 dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (True, (float(trial.targetHitCount) / float(trial.targetTotalCount))*100))
-plotHeatmap(titles, dataArrs, xTicks, yTicks, "Percentage Targets Hit", textformat="%d")
+plotHeatmap(titles, dataArrs, xTicks, yTicks, "Percentage Targets Identified", textformat="%d")
 
-dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (True, (trial.misclicks/(trial.targetHitCount+trial.misclicks))*100) if trial.targetHitCount+trial.misclicks > 0 else (False, 0))
-plotHeatmap(titles, dataArrs, xTicks, yTicks, "Percentage of Misclicks", textformat="%d")
+dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (True, (1-(trial.misclicks/(trial.targetHitCount+trial.misclicks)))*100) if trial.targetHitCount+trial.misclicks > 0 else (False, 0))
+plotHeatmap(titles, dataArrs, xTicks, yTicks, "Percentage of Successful Clicks", textformat="%d")
 
 dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (True, trial.trialDuration/((500/float(trial.targetSpeed))*1000)))
 plotHeatmap(titles, dataArrs, xTicks, yTicks, "Trial Duration")
 
 dataArrs, xTicks, yTicks, numSamplesArrs = aggregateTargetHits(targetHitsByFrameDuration, trialByAssId, trialsByFrameDuration)
 plotHeatmap(titles, dataArrs, xTicks, yTicks, "Aggregated Avg Proximity")
+
+dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (trial.targetHitCount > 0, [hit.timeTakenToClick for hit in hitByAssId[trial.assignmentId][trial.trialId] if hit.targetCount == 1]))
+plotHeatmap(titles, dataArrs, xTicks, yTicks,"Avg Time To Click")
 
 plt.show()
 print("\nDone.")
