@@ -102,9 +102,14 @@ def plotHeatmap(titles, dataArrs, xLabels, yLabels, title, textformat="%.2f"):
 
         for y in range(dataArr.shape[0]):
             for x in range(dataArr.shape[1]):
+                colorThresh = vmin + ((vmax - vmin) * 0.4)
+                color = 'black'
+                if dataArr[y, x] < colorThresh:
+                    color = 'white'
                 subfig.text(x + 0.5, y + 0.5, textformat % dataArr[y, x],
                          horizontalalignment='center',
                          verticalalignment='center',
+                         color = color
                          )
 
         midTickLoc = [0.5,1.5,2.5,3.5,4.5,5.5]
@@ -175,7 +180,11 @@ def aggregateTargetHits(targetHitsByFrameDuration, trialByAssId, trialsByFrameDu
     def getAvgProx(trial):
         useThisValue = canBeUsed[trial.frameDuration][trial.targetTotalCount][trial.targetSpeed]
         canBeUsed[trial.frameDuration][trial.targetTotalCount][trial.targetSpeed] = False
-        proxValues = proxByFrameCountSpeed[trial.frameDuration][trial.targetTotalCount][trial.targetSpeed]
+        proxValues = np.array(proxByFrameCountSpeed[trial.frameDuration][trial.targetTotalCount][trial.targetSpeed])
+        proxValues = np.linalg.norm(np.mean(proxValues, axis=0))
+
+        proxValues = (1.0-(proxValues / 25.0))*100
+
         return (useThisValue, proxValues)
     return constructDataArray(trialsByFrameDuration, getAvgProx)
 
@@ -364,7 +373,7 @@ dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDurat
 plotHeatmap(titles, dataArrs, xTicks, yTicks, "Trial Duration")
 
 dataArrs, xTicks, yTicks, numSamplesArrs = aggregateTargetHits(targetHitsByFrameDuration, trialByAssId, trialsByFrameDuration)
-plotHeatmap(titles, dataArrs, xTicks, yTicks, "Aggregated Avg Proximity")
+plotHeatmap(titles, dataArrs, xTicks, yTicks, "Aggregated Avg Proximity", textformat="%d")
 
 dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (trial.targetHitCount > 0, [hit.timeTakenToClick for hit in hitByAssId[trial.assignmentId][trial.trialId] if hit.targetCount == 1]))
 plotHeatmap(titles, dataArrs, xTicks, yTicks,"Avg Time To Click")
