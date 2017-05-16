@@ -4,7 +4,7 @@ import sys
 import collections
 import os
 import matplotlib as mpl
-mpl.rcParams['pdf.fonttype'] = 42
+# mpl.rcParams['pdf.fonttype'] = 42
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
@@ -23,6 +23,7 @@ class TargetHit:
         self.targetCount = int(row[6])
         self.startTime = int(row[7])
         self.timeTakenToClick = int(row[8])
+        self.timeTakenToClickCumulative = -1
         self.startTargetPos = json.loads(row[9])
         self.endTargetPos = json.loads(row[10])
         self.mousePath = json.loads(row[11])
@@ -48,6 +49,7 @@ class Trial:
 
 def constructDataArray(trialsByFrameDuration, calcFunc):
     dataArrs = {}
+    stdDevArrs = {}
     numSamplesArrs = {}
     xTicks = set()
     yTicks = set()
@@ -64,24 +66,28 @@ def constructDataArray(trialsByFrameDuration, calcFunc):
                 yTicks.add(trial.targetTotalCount)
 
         dataArr = np.zeros((6,6), dtype=np.float64)
+        stdDevArr = np.zeros((6,6), dtype=np.float64)
         numSamplesArr = np.zeros((6,6), dtype=np.float64)
         for y, k1 in enumerate(sorted(dataDict)):
             for x, k2 in enumerate(sorted(dataDict[k1])):
                 if len(dataDict[k1][k2]) > 0:
                     dataArr[y,x] = np.average(dataDict[k1][k2])
+                    stdDevArr[y,x] = np.std(dataDict[k1][k2])
                 else:
                     dataArr[y,x] = 0
+                    stdDevArr[y, x] = -1
                 numSamplesArr[y,x] = len(dataDict[k1][k2])
 
         dataArrs[frameDuration] = dataArr
+        stdDevArrs[frameDuration] = stdDevArr
         numSamplesArrs[frameDuration] = numSamplesArr
 
-    return dataArrs, sorted(xTicks), sorted(yTicks), numSamplesArrs
+    return dataArrs, sorted(xTicks), sorted(yTicks), numSamplesArrs, stdDevArrs
 
 def plotHeatmap(titles, dataArrs, xLabels, yLabels, title, textformat="%.2f"):
     #create the figure we're going to plot
     fig, axes = plt.subplots(nrows=2, ncols=2)
-    fig.suptitle(title, fontsize=14, fontweight='bold')
+    fig.suptitle(title, fontsize=24, fontweight='bold')
 
     vmin = sys.float_info.max
     vmax = sys.float_info.min
@@ -96,7 +102,7 @@ def plotHeatmap(titles, dataArrs, xLabels, yLabels, title, textformat="%.2f"):
 
         # Now print the data
         subfig = axes.flat[i]
-        subfig.set_title(titles[frameDuration])
+        subfig.set_title(titles[frameDuration], fontsize=20)
 
         heatmap = subfig.pcolor(dataArr, vmin=vmin, vmax=vmax)
 
@@ -115,11 +121,11 @@ def plotHeatmap(titles, dataArrs, xLabels, yLabels, title, textformat="%.2f"):
         midTickLoc = [0.5,1.5,2.5,3.5,4.5,5.5]
         subfig.set_xticks(midTickLoc)
         subfig.set_yticks(midTickLoc)
-        subfig.set_xticklabels(xLabels)
-        subfig.set_yticklabels(yLabels)
+        subfig.set_xticklabels(xLabels, fontsize=14)
+        subfig.set_yticklabels(yLabels, fontsize=14)
 
-    fig.text(0.5, 0.04, 'Speed of Targets in Pixels per Second', ha='center')
-    fig.text(0.04, 0.5, 'Number of Simultaneous Targets', va='center', rotation='vertical')
+    fig.text(0.5, 0.04, 'Speed of Targets in Pixels per Second', ha='center', fontsize=16)
+    fig.text(0.04, 0.5, 'Number of Simultaneous Targets', va='center', rotation='vertical', fontsize=16)
 
     fig.set_size_inches(10, 10)
     plt.savefig("{}.pdf".format(title).replace(" ", "_"))
@@ -285,6 +291,14 @@ for assId in trialByAssId:
             assIdsToRemove.add(assId)
             whyWasAssIdRejected[assId] = "Missing Target Hits"
 
+        else:
+            targetCounts = set([int(hit.targetCount) for hit in hitByAssId[assId][trialId]])
+            desiredCounts = set(range(1,trial.targetHitCount+1))
+            if targetCounts != desiredCounts:
+                # looks like we have unsequential hits or hits with the same number
+                assIdsToRemove.add(assId)
+                whyWasAssIdRejected[assId] = "Unsequential Target Hits"
+
 #check if the hit has a trial associated with it
 for assId in hitByAssId:
     if assId in assIdsToRemove:
@@ -312,6 +326,20 @@ for assId in hitByAssId:
 for frameDuration in trialsByFrameDuration:
     trialsByFrameDuration[frameDuration] = [trial for trial in trialsByFrameDuration[frameDuration] if trial.assignmentId not in assIdsToRemove]
     targetHitsByFrameDuration[frameDuration] = [hit for hit in targetHitsByFrameDuration[frameDuration] if hit.assignmentId not in assIdsToRemove]
+hitByAssId = {assId:hitByAssId[assId] for assId in hitByAssId if assId not in assIdsToRemove}
+
+#calculate cumulative timing for hits
+for assId in hitByAssId:
+    for trialId in hitByAssId[assId]:
+        timing = np.zeros(len(hitByAssId[assId][trialId]))
+        for hit in hitByAssId[assId][trialId]:
+            timing[int(hit.targetCount) - 1] = hit.timeTakenToClick
+
+        cumtiming = np.cumsum(timing)
+
+        for hit in hitByAssId[assId][trialId]:
+            hit.timeTakenToClickCumulative = cumtiming[int(hit.targetCount) - 1]
+
 
 #count the assignments per frame duration
 print("Assignments per frame duration")
@@ -354,8 +382,9 @@ for frameDuration in sorted(trialsByFrameDuration.keys()):
 
 # proximity
 titles = {0:"Live", 1000:"1s Still Frame", 2000:"2s Still Frame", 3000:"3s Still Frame"}
-dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (trial.targetHitCount > 0, [(1.0-(hit.proximity/25.0))*100 for hit in hitByAssId[trial.assignmentId][trial.trialId] if hit.proximity <= 25]))
+dataArrs, xTicks, yTicks, numSamplesArrs, stdDevArrs = constructDataArray(trialsByFrameDuration, lambda trial: (trial.targetHitCount > 0, [(1.0-(hit.proximity/25.0))*100 for hit in hitByAssId[trial.assignmentId][trial.trialId] if hit.proximity <= 25]))
 plotHeatmap(titles, dataArrs, xTicks, yTicks,"Percentage Proximity to Target Center", textformat="%d")
+plotHeatmap(titles, stdDevArrs, xTicks, yTicks,"STD DEV Proximity to Target Center", textformat="%d")
 
 subDataArrs = {}
 for frameDuration in dataArrs.keys():
@@ -363,20 +392,56 @@ for frameDuration in dataArrs.keys():
 plotHeatmap(titles, subDataArrs, xTicks, yTicks, "Diff Avg Proximity with Live")
 
 #targets hit
-dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (True, (float(trial.targetHitCount) / float(trial.targetTotalCount))*100))
-plotHeatmap(titles, dataArrs, xTicks, yTicks, "Percentage Targets Identified", textformat="%d")
+dataArrs, xTicks, yTicks, numSamplesArrs, stdDevArrs = constructDataArray(trialsByFrameDuration, lambda trial: (True, (float(trial.targetHitCount) / float(trial.targetTotalCount))*100))
+plotHeatmap(titles, dataArrs, xTicks, yTicks, "Percentage of Targets Identified", textformat="%d")
+plotHeatmap(titles, stdDevArrs, xTicks, yTicks, "STD DEV of Targets Identified", textformat="%d")
 
-dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (True, (1-(trial.misclicks/(trial.targetHitCount+trial.misclicks)))*100) if trial.targetHitCount+trial.misclicks > 0 else (False, 0))
+dataArrs, xTicks, yTicks, numSamplesArrs, stdDevArrs = constructDataArray(trialsByFrameDuration, lambda trial: (True, (1-(trial.misclicks/(trial.targetHitCount+trial.misclicks)))*100) if trial.targetHitCount+trial.misclicks > 0 else (False, 0))
 plotHeatmap(titles, dataArrs, xTicks, yTicks, "Percentage of Successful Clicks", textformat="%d")
+plotHeatmap(titles, stdDevArrs, xTicks, yTicks, "STD DEV of Successful Clicks", textformat="%d")
 
-dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (True, trial.trialDuration/((500/float(trial.targetSpeed))*1000)))
-plotHeatmap(titles, dataArrs, xTicks, yTicks, "Trial Duration")
+# dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (True, trial.trialDuration/((500/float(trial.targetSpeed))*1000)))
+# plotHeatmap(titles, dataArrs, xTicks, yTicks, "Trial Duration")
 
-dataArrs, xTicks, yTicks, numSamplesArrs = aggregateTargetHits(targetHitsByFrameDuration, trialByAssId, trialsByFrameDuration)
+dataArrs, xTicks, yTicks, numSamplesArrs, stdDevArrs = aggregateTargetHits(targetHitsByFrameDuration, trialByAssId, trialsByFrameDuration)
 plotHeatmap(titles, dataArrs, xTicks, yTicks, "Aggregated Avg Proximity", textformat="%d")
 
-dataArrs, xTicks, yTicks, numSamplesArrs = constructDataArray(trialsByFrameDuration, lambda trial: (trial.targetHitCount > 0, [hit.timeTakenToClick for hit in hitByAssId[trial.assignmentId][trial.trialId] if hit.targetCount == 1]))
+dataArrs, xTicks, yTicks, numSamplesArrs, stdDevArrs = constructDataArray(trialsByFrameDuration, lambda trial: (trial.targetHitCount > 0, [hit.timeTakenToClick for hit in hitByAssId[trial.assignmentId][trial.trialId] if hit.targetCount == 1]))
 plotHeatmap(titles, dataArrs, xTicks, yTicks,"Avg Time To Click")
+
+
+def timeToIdentifyMultiple(trialsByFrameDuration, hitByAssId, targetTotalCount=6):
+    dataArrs = {}
+    numSamplesArrs = {}
+    xTicks = set()
+    yTicks = set()
+    for frameDuration in trialsByFrameDuration.keys():
+        dataDict = collections.defaultdict(lambda: collections.defaultdict(list))
+        for trial in trialsByFrameDuration[frameDuration]:
+            if trial.targetTotalCount == targetTotalCount:
+                hits = hitByAssId[trial.assignmentId][trial.trialId]
+                for hit in hits:
+                    dataDict[hit.targetCount][trial.targetSpeed].append(hit.timeTakenToClickCumulative)
+                    xTicks.add(trial.targetSpeed)
+                    yTicks.add(hit.targetCount)
+
+        dataArr = np.zeros((6, 6), dtype=np.float64)
+        numSamplesArr = np.zeros((6, 6), dtype=np.float64)
+        for y, k1 in enumerate(sorted(dataDict)):
+            for x, k2 in enumerate(sorted(dataDict[k1])):
+                if len(dataDict[k1][k2]) > 0:
+                    dataArr[y, x] = np.average(dataDict[k1][k2])
+                else:
+                    dataArr[y, x] = 0
+                numSamplesArr[y, x] = len(dataDict[k1][k2])
+
+        dataArrs[frameDuration] = dataArr
+        numSamplesArrs[frameDuration] = numSamplesArr
+
+    return dataArrs, sorted(xTicks), sorted(yTicks), numSamplesArrs
+
+dataArrs, xTicks, yTicks, numSamplesArrs = timeToIdentifyMultiple(trialsByFrameDuration, hitByAssId)
+plotHeatmap(titles, dataArrs, xTicks, yTicks, "Avg Time Taken To Identify Targets")
 
 plt.show()
 print("\nDone.")
