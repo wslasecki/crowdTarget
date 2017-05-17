@@ -96,6 +96,8 @@ def plotHeatmap(titles, dataArrs, xLabels, yLabels, title, textformat="%.2f"):
         vmin = min(dataArr.min(), vmin)
         vmax = max(dataArr.max(), vmax)
 
+    vmin = 20
+    vmax = 100
 
     for i, frameDuration in enumerate(sorted(dataArrs.keys())):
         dataArr = dataArrs[frameDuration]
@@ -404,7 +406,7 @@ plotHeatmap(titles, stdDevArrs, xTicks, yTicks, "STD DEV of Successful Clicks", 
 # plotHeatmap(titles, dataArrs, xTicks, yTicks, "Trial Duration")
 
 dataArrs, xTicks, yTicks, numSamplesArrs, stdDevArrs = aggregateTargetHits(targetHitsByFrameDuration, trialByAssId, trialsByFrameDuration)
-plotHeatmap(titles, dataArrs, xTicks, yTicks, "Aggregated Avg Proximity", textformat="%d")
+plotHeatmap(titles, dataArrs, xTicks, yTicks, "Aggregated Proximity to Target Center", textformat="%d")
 
 dataArrs, xTicks, yTicks, numSamplesArrs, stdDevArrs = constructDataArray(trialsByFrameDuration, lambda trial: (trial.targetHitCount > 0, [hit.timeTakenToClick for hit in hitByAssId[trial.assignmentId][trial.trialId] if hit.targetCount == 1]))
 plotHeatmap(titles, dataArrs, xTicks, yTicks,"Avg Time To Click")
