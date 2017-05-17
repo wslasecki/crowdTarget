@@ -132,6 +132,38 @@ def plotHeatmap(titles, dataArrs, xLabels, yLabels, title, textformat="%.2f"):
     fig.set_size_inches(10, 10)
     plt.savefig("{}.pdf".format(title).replace(" ", "_"))
 
+def timeToIdentifyMultiple(trialsByFrameDuration, hitByAssId, targetTotalCount=6):
+    dataArrs = {}
+    numSamplesArrs = {}
+    xTicks = set()
+    yTicks = set()
+    for frameDuration in trialsByFrameDuration.keys():
+        dataDict = collections.defaultdict(lambda: collections.defaultdict(list))
+        for trial in trialsByFrameDuration[frameDuration]:
+            if True:#trial.targetTotalCount == targetTotalCount:
+                hits = hitByAssId[trial.assignmentId][trial.trialId]
+                for hit in hits:
+                    totalRoundDuration = (500.0 / trial.targetSpeed) * 1000
+                    dataDict[hit.targetCount][trial.targetSpeed].append(hit.timeTakenToClickCumulative / totalRoundDuration)
+                    xTicks.add(trial.targetSpeed)
+                    yTicks.add(hit.targetCount)
+
+        dataArr = np.zeros((6, 6), dtype=np.float64)
+        numSamplesArr = np.zeros((6, 6), dtype=np.float64)
+        for y, k1 in enumerate(sorted(dataDict)):
+            for x, k2 in enumerate(sorted(dataDict[k1])):
+                if len(dataDict[k1][k2]) > 0:
+                    dataArr[y, x] = np.mean(dataDict[k1][k2])
+                else:
+                    dataArr[y, x] = 0
+                numSamplesArr[y, x] = len(dataDict[k1][k2])
+
+
+        dataArrs[frameDuration] = dataArr
+        numSamplesArrs[frameDuration] = numSamplesArr
+
+    return dataArrs, sorted(xTicks), sorted(yTicks), numSamplesArrs
+
 def aggregateTargetHits(targetHitsByFrameDuration, trialByAssId, trialsByFrameDuration):
     #create a data structure to store similar target hits
     targetHitsByFrameSpeedTrialCount = collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(list))))
@@ -411,39 +443,8 @@ plotHeatmap(titles, dataArrs, xTicks, yTicks, "Aggregated Proximity to Target Ce
 dataArrs, xTicks, yTicks, numSamplesArrs, stdDevArrs = constructDataArray(trialsByFrameDuration, lambda trial: (trial.targetHitCount > 0, [hit.timeTakenToClick for hit in hitByAssId[trial.assignmentId][trial.trialId] if hit.targetCount == 1]))
 plotHeatmap(titles, dataArrs, xTicks, yTicks,"Avg Time To Click")
 
-
-def timeToIdentifyMultiple(trialsByFrameDuration, hitByAssId, targetTotalCount=6):
-    dataArrs = {}
-    numSamplesArrs = {}
-    xTicks = set()
-    yTicks = set()
-    for frameDuration in trialsByFrameDuration.keys():
-        dataDict = collections.defaultdict(lambda: collections.defaultdict(list))
-        for trial in trialsByFrameDuration[frameDuration]:
-            if trial.targetTotalCount == targetTotalCount:
-                hits = hitByAssId[trial.assignmentId][trial.trialId]
-                for hit in hits:
-                    dataDict[hit.targetCount][trial.targetSpeed].append(hit.timeTakenToClickCumulative)
-                    xTicks.add(trial.targetSpeed)
-                    yTicks.add(hit.targetCount)
-
-        dataArr = np.zeros((6, 6), dtype=np.float64)
-        numSamplesArr = np.zeros((6, 6), dtype=np.float64)
-        for y, k1 in enumerate(sorted(dataDict)):
-            for x, k2 in enumerate(sorted(dataDict[k1])):
-                if len(dataDict[k1][k2]) > 0:
-                    dataArr[y, x] = np.average(dataDict[k1][k2])
-                else:
-                    dataArr[y, x] = 0
-                numSamplesArr[y, x] = len(dataDict[k1][k2])
-
-        dataArrs[frameDuration] = dataArr
-        numSamplesArrs[frameDuration] = numSamplesArr
-
-    return dataArrs, sorted(xTicks), sorted(yTicks), numSamplesArrs
-
 dataArrs, xTicks, yTicks, numSamplesArrs = timeToIdentifyMultiple(trialsByFrameDuration, hitByAssId)
-plotHeatmap(titles, dataArrs, xTicks, yTicks, "Avg Time Taken To Identify Targets")
+plotHeatmap(titles, dataArrs, xTicks, yTicks, "Avg Time Taken To Identify Targets", textformat="%0.1f")
 
 plt.show()
 print("\nDone.")
